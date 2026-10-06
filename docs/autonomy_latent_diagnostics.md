@@ -20,6 +20,7 @@ OMP_NUM_THREADS=8 MKL_NUM_THREADS=8 .venv/bin/python scripts/inspect_autonomy_la
   --checkpoint runs/R2/upper_baseline/epoch_000005.pth \
   --checkpoint runs/R2/upper_baseline/epoch_000015.pth \
   --probe-evaluation runs/R2/upper_r1_train \
+  --probe-config configs/training_handoff_v1/upper_pilot.json \
   --case-id 01328DDN_upper --case-id 01422MSK_upper \
   --output runs/analysis/latent_response.json
 ```
@@ -28,6 +29,9 @@ During an active training job run the tool from the independent checkout and wri
 there; never mutate its training checkout or use CUDA. Checkpoint loading is
 CPU-only and sequential, with memory mapping to avoid copying optimizer tensors.
 Use uniquely saved epoch checkpoints rather than mutable best checkpoint aliases.
+Older evaluator provenance omitted manifest/canonical binding. For those artifacts
+`--probe-config` must name the exact original config (matching recorded SHA); the
+tool verifies both frozen references and reconstructs the data binding explicitly.
 
 Small code magnitudes alone do not demonstrate collapse: a hypernetwork can amplify
 small differences. SDF deltas are field diagnostics in model units, not geometric

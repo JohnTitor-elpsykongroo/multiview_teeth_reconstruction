@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
-from inspect_autonomy_latents import latent_statistics, original_rows, fixed_train_probes
+from inspect_autonomy_latents import latent_statistics, original_rows, fixed_train_probes, probe_binding, sha
 
 
 class LatentDiagnosticsTests(unittest.TestCase):
@@ -67,6 +67,24 @@ class LatentDiagnosticsTests(unittest.TestCase):
             np.savez(path,model_unit_mm=50,observed_points_model=np.zeros((4,3)),observed_labels=np.array([0,0,0,0]))
             with self.assertRaisesRegex(ValueError,'presence'):
                 fixed_train_probes(folder,['a'],1,original_rows(self.saved))
+
+    def test_older_provenance_requires_exact_config_and_frozen_references(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            manifest=folder/'manifest.json'
+            manifest.write_text('{}')
+            canonical=folder/'canonical.json'
+            canonical.write_text(json.dumps(dict(reference_id='canonical')))
+            config=folder/'config.json'
+            config.write_text(json.dumps(dict(arch='upper',manifest=dict(path='manifest.json',sha256=sha(manifest)),
+                canonical_reference=dict(path='canonical.json',sha256=sha(canonical)))))
+            provenance=dict(config_sha256=sha(config))
+            saved=dict(arch='upper',manifest_sha256=sha(manifest),canonical_reference_id='canonical')
+            with self.assertRaisesRegex(ValueError,'exact --probe-config'): probe_binding(provenance,saved)
+            hashes=probe_binding(provenance,saved,config)
+            self.assertEqual(hashes[str(config)],sha(config))
+            config.write_text('{}')
+            with self.assertRaisesRegex(ValueError,'config hash mismatch'): probe_binding(provenance,saved,config)
 
 
 if __name__=='__main__': unittest.main()

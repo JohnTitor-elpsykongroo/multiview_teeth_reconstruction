@@ -162,7 +162,28 @@ def field_response(model, codes, mean_codes, points, truth):
     return result
 
 
-def inspect(checkpoint, probe_folder=None, case_ids=(), quota=16):
+def probe_binding(provenance, saved, config_path=None):
+    if 'manifest_sha256' in provenance and 'canonical_reference_id' in provenance:
+        if provenance['manifest_sha256'] != saved['manifest_sha256'] or provenance['canonical_reference_id'] != saved['canonical_reference_id']:
+            raise ValueError('probe/checkpoint data binding mismatch')
+        return {}
+    # Older evaluator provenance omitted these two fields. Reconstruct the
+    # binding from its exact hashed config and frozen references, never guess.
+    if config_path is None:
+        raise ValueError('older probe provenance requires its exact --probe-config')
+    from dmm.validation import resolve_ref
+    config_path = Path(config_path).resolve()
+    if sha(config_path) != provenance['config_sha256']:
+        raise ValueError('probe config hash mismatch')
+    config = read(config_path)
+    manifest = resolve_ref(config_path,config['manifest'])
+    canonical = resolve_ref(config_path,config['canonical_reference'])
+    if config['arch'] != saved['arch'] or config['manifest']['sha256'] != saved['manifest_sha256'] or read(canonical)['reference_id'] != saved['canonical_reference_id']:
+        raise ValueError('probe/checkpoint data binding mismatch')
+    return {str(path):sha(path) for path in (config_path,manifest,canonical)}
+
+
+def inspect(checkpoint, probe_folder=None, case_ids=(), quota=16, probe_config=None):
     from dmm.provenance import validate_decoder_binding, decoder_contract
     from networks.dmm_net import DMM
     started = time.perf_counter()
@@ -176,8 +197,7 @@ def inspect(checkpoint, probe_folder=None, case_ids=(), quota=16):
     if probe_folder is not None:
         validate_decoder_binding(dict(local_source_sha256=saved['source_sha256'], decoder_contract=saved['decoder_contract']))
         provenance, probes, hashes = fixed_train_probes(Path(probe_folder), case_ids, quota, original_rows(saved))
-        if provenance['manifest_sha256'] != saved['manifest_sha256'] or provenance['canonical_reference_id'] != saved['canonical_reference_id']:
-            raise ValueError('probe/checkpoint data binding mismatch')
+        hashes.update(probe_binding(provenance,saved,probe_config))
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(0)
             model = DMM(saved['specs'], arch=saved['arch']).cpu().eval().requires_grad_(False)
@@ -201,13 +221,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--checkpoint', type=Path, action='append', required=True)
     parser.add_argument('--probe-evaluation', type=Path)
+    parser.add_argument('--probe-config', type=Path)
     parser.add_argument('--case-id', action='append', default=[])
     parser.add_argument('--points-per-component', type=int, default=16)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or args.points_per_component < 1 or bool(args.case_id) != bool(args.probe_evaluation):
         parser.error('fresh output, positive quota, and paired probe/case arguments required')
-    results = [inspect(path,args.probe_evaluation,args.case_id,args.points_per_component) for path in args.checkpoint]
+    results = [inspect(path,args.probe_evaluation,args.case_id,args.points_per_component,args.probe_config) for path in args.checkpoint]
     result = dict(schema='dmm_original_latent_diagnostic_v1', script_sha256=sha(__file__),
         runtime=dict(torch=torch.__version__,numpy=np.__version__,device='cpu'),points_per_component=args.points_per_component,
         limitations='Fixed learned-train points; SDF change is not mesh distance. No clinical or latent-collapse threshold. No fit/grid/patient uncertainty measured.',

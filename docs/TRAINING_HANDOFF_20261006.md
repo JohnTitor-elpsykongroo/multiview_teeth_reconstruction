@@ -1,6 +1,6 @@
 # RTX 5090 / WSL2 训练交接
 
-**更新：以 [Git 分轮训练计划](TRAINING_ITERATION_PLAN.md) 为当前执行入口。** 当前标签 `training-r0-v3` 使用 Python 3.10，新机器通过本项目 Git 仓库及固定标签同步，先做 R0/R1 后反馈，暂不执行本文的 formal 示例。下文 ZIP 搬运是此前交付方式，保留用于旧包核验；Git checkout 无需 `training_package_manifest.json`，校验脚本会改为检查干净的项目 commit。DMM donor 身份由 `UPSTREAM.json` 提供，不依赖嵌套 `.git`。
+**更新：以 [Git 分轮训练计划](TRAINING_ITERATION_PLAN.md) 为当前执行入口。** 当前标签 `training-r0-v3` 使用 Python 3.10，新机器通过本项目 Git 仓库及固定标签同步，按 [自主实验指南](AUTONOMOUS_R0_R4_RESEARCH_GUIDE.md) 由目标机自行评估并推进 R0–R4，满足证据要求后可执行 formal。下文 ZIP 搬运是此前交付方式，保留用于旧包核验；Git checkout 无需 `training_package_manifest.json`，校验脚本会改为检查干净的项目 commit。DMM donor 身份由 `UPSTREAM.json` 提供，不依赖嵌套 `.git`。
 
 当前交接对象：ThinkStation、RTX 5090、128GB 内存、Windows + WSL2。目标是两套独立的 10 维耦合 DMM 先验；训练期间不需要人脸、视频、相机或 nvdiffrast。
 

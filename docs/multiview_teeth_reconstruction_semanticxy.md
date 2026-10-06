@@ -1,4 +1,4 @@
-> Git 同步版本：本文件复制自项目外部设计文档，后续跨机器修改以本仓库文件为准。当前执行入口为 [分轮训练计划](TRAINING_ITERATION_PLAN.md)，先完成 R0/R1 后反馈。
+> Git 同步版本：本文件复制自项目外部设计文档，后续跨机器修改以本仓库文件为准。用户已授权目标机 Codex 自主推进 R0–R4，当前执行入口为 [自主实验指南](AUTONOMOUS_R0_R4_RESEARCH_GUIDE.md)，命令参考 [分轮训练计划](TRAINING_ITERATION_PLAN.md)。
 
 # 多视图牙齿照片驱动的先验模型 3D 重建：从 SemanticXY 到 Prior Regularization
 

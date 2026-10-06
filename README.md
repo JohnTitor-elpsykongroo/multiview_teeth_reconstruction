@@ -1,8 +1,8 @@
 # DMM 多视图重建：前向核对、Pose-only、Shape-only 与 Joint
 
-**Git 训练协作入口：[分轮训练、目标机克隆与反馈计划](docs/TRAINING_ITERATION_PLAN.md)。** 项目根目录现作为独立仓库，DMM 和 nvdiffrast 修改源码直接纳入版本管理。数据、权重和环境另行迁移。当前只执行 R0 预检与 R1 短程 pilot，反馈后再修改、更新和继续训练。仓库内 [主设计文档](docs/multiview_teeth_reconstruction_semanticxy.md) 随代码同步。
+**Git 训练协作入口：[分轮训练、目标机克隆与反馈计划](docs/TRAINING_ITERATION_PLAN.md)。** 项目根目录现作为独立仓库，DMM 和 nvdiffrast 修改源码直接纳入版本管理。数据、权重和环境另行迁移。用户已授权目标机 Codex 自主实施 R0–R4，必读 [自主实验指南](docs/AUTONOMOUS_R0_R4_RESEARCH_GUIDE.md)，其中包含论文、源码阅读路线、调试方法及推进标准。仓库内 [主设计文档](docs/multiview_teeth_reconstruction_semanticxy.md) 随代码同步。
 
-远程仓库：[JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。新机器部署使用 `training-r0-v3` 标签（Python 3.10 / PyTorch 2.10.0 / cu130，DMM 源码和训练 JSON 配置不变；重新执行预检）。
+远程仓库：[JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。Python 3.10 环境基线使用 `training-r0-v3` 标签（Python 3.10 / PyTorch 2.10.0 / cu130，DMM 源码和训练 JSON 配置不变；重新执行预检）。
 
 RTX 5090 / WSL2 训练交接：[交接入口与修复证据](docs/TRAINING_HANDOFF_20261006.md)。新配置在 `configs/training_handoff_v1/`，使用非零参考初始化与稳定法线分母；脚本提供包校验、目标 GPU 预检、smoke、pilot、显式长训入口。正式几何质量尚待 pilot/训练验证。
 
@@ -13,6 +13,8 @@ RTX 5090 / WSL2 训练交接：[交接入口与修复证据](docs/TRAINING_HANDO
 照片流程新增：[阶段二 RGB → 逐牙观测初步实现](docs/stage2_image_understanding_v1.md)；[阶段二 → 阶段三观测契约](docs/tooth_observations_v1.md)；[Blender pilot验收与RGB遮挡分支改进](docs/stage2_blender_acceptance_20261005.md)。两组pilot已用于输入验收和数值联调，25项测试通过；尚无正式分割训练或识别精度结论。
 
 工作站部署与训练：[ThinkStation / RTX 5090 / 128GB 的 WSL2 环境配置与训练手册](docs/WSL_RTX5090_environment_and_training.md)，包含源码迁移、数据校验、GPU 预检、独立双颌训练、续跑、模型导出和可选联合拟合。
+
+当前自主研究交接标签为 `training-autonomy-v1`；环境已经配置的目标机无需重装。
 
 ## 当前双颌开发约定
 

@@ -1,0 +1,17 @@
+{
+  "dmm_root": "D:\\WorkSpace\\Dental\\DMM",
+  "experiment": "D:\\WorkSpace\\Dental\\experiments\\DMM\\20260824",
+  "dataset": "D:\\WorkSpace\\Dental\\data\\Teeth3DS_DMM\\05_dataset_profiles\\upper_v1.3_strict_fixed_offsurface",
+  "checkpoint": "best",
+  "case": "01328DDN_upper.npz",
+  "tooth_grid_n": 64,
+  "gum_grid_n": 64,
+  "query_batch": 8192,
+  "cpu_threads": 8,
+  "image_width": 640,
+  "image_height": 480,
+  "focal_pixels": 680,
+  "camera_distance_arch_widths": 2.0,
+  "camera_elevation_degrees": 10,
+  "camera_azimuth_degrees": [0, -30, 30]
+}

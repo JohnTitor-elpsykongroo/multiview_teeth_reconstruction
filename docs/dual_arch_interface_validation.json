@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-04",
+  "status": "PASS",
+  "tests_run": 14,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "seconds": 17.041,
+  "python": "3.12.14",
+  "pytorch": "2.13.0+cpu",
+  "device": "cpu",
+  "source_sha256": "6f2c61c6b0b12bd35f8e790dc35626f35c5c7f381e7fe10074e0606f7e691eb1",
+  "upstream_commit": "4081275ae13ad482b789fb57df4855049b1a46b8",
+  "scope": "synthetic interface fixtures only; no real dataset training or image reconstruction",
+  "historical_sanity_checks_rerun": false
+}

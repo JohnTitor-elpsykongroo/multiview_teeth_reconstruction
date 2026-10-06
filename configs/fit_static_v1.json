@@ -1,0 +1,33 @@
+{
+  "contract_id": "dual_arch_static_semantic",
+  "version": "1.0.0",
+  "artifact_kind": "fit_config",
+  "representation_profile": "coupled_component_dmm",
+  "algorithm": "staged_backtracking_v1",
+  "pose_iterations": 40,
+  "shape_iterations": 40,
+  "joint_iterations": 80,
+  "rotation_step_rad": 0.01,
+  "translation_step_mm": 1.0,
+  "latent_step": 0.1,
+  "backtracks": 8,
+  "prior_weight": 0.001,
+  "recovery_weight": 0.2,
+  "max_q_rms": 4.0,
+  "loss_tolerance": 1e-05,
+  "gradient_tolerance": 1e-06,
+  "patience": 5,
+  "min_tooth_iou": 0.85,
+  "diagnostic_reference": false,
+  "recovery": {
+    "enabled": true,
+    "mass_ratio": 0.05,
+    "min_pixels": 1,
+    "source_samples": 128,
+    "target_samples": 64,
+    "depth_margin_mm": 0.5,
+    "depth_scale_mm": 50.0,
+    "bootstrap_max_translation_mm": 200.0,
+    "bootstrap_condition_limit": 1000000.0
+  }
+}

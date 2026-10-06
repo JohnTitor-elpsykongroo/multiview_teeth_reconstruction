@@ -1,0 +1,14 @@
+{
+  "contract_id": "dual_arch_static_semantic",
+  "version": "1.0.0",
+  "artifact_kind": "render_config",
+  "representation_profile": "coupled_component_dmm",
+  "algorithm": "material_xy_v1",
+  "backend": "torch_reference",
+  "near_mm": 0.1,
+  "far_mm": 10000.0,
+  "tile_size": 16,
+  "face_chunk": 128,
+  "max_pixels": 1048576,
+  "supersample": 1
+}

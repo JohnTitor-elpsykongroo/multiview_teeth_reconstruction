@@ -1,0 +1,14 @@
+{
+  "base_config": "configs/pose_only.json",
+  "seed": 20261004,
+  "workers": 4,
+  "trials_per_level": 4,
+  "levels": [
+    {"id": "small", "rotation_degrees": [5.0, 10.0], "translation_dmm": [0.02, 0.05]},
+    {"id": "medium", "rotation_degrees": [10.0, 20.0], "translation_dmm": [0.05, 0.12]},
+    {"id": "large", "rotation_degrees": [25.0, 40.0], "translation_dmm": [0.15, 0.25]},
+    {"id": "stress", "rotation_degrees": [60.0, 90.0], "translation_dmm": [0.35, 0.50]}
+  ],
+  "acceptance_overrides": {"min_mean_tooth_iou_gain": 0.0},
+  "acceptance_reason": "Use unchanged absolute pose and final IoU limits, and require no IoU degradation. The previous 0.5 gain limit is recorded separately because small perturbations can start with high IoU."
+}

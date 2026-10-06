@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-04",
+  "status": "PASS",
+  "tests_run": 20,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "seconds": 1.228,
+  "python": "3.12.14",
+  "pytorch": "2.13.0+cpu",
+  "device": "cpu",
+  "source_sha256": "32a080b71d089a025117519a2dd7a177e52b993c7c2e9d91c937141dfedd30da",
+  "config_sha256": "684aa66734ff71499e8d3c546f4c22c8dffabd15b6b0aa3702ec5d394238eb33",
+  "scope": "SemanticXY tensor fixtures and projected-attribute optimization; no renderer or SDF gradient bridge validation",
+  "dmm_training_started": false,
+  "historical_sanity_checks_rerun": false
+}

@@ -1,0 +1,17 @@
+{
+  "control_run": "D:/WorkSpace/Dental/multiview_teeth_reconstruction/runs/joint_four_tooth_20261004T054205Z/jobs/four_clean/fit_attempt_01",
+  "engine_snapshot": "D:/WorkSpace/Dental/multiview_teeth_reconstruction/runs/joint_four_tooth_20261004T054205Z/code_snapshot",
+  "max_workers": 2,
+  "scope": "One training case, FDI 11/12/21/22, known cameras, frozen alternating population-prior Joint; diagnostic single-factor checks only",
+  "replay_tolerances": {"clean_iou": 0.0001, "heldout_iou": 0.0001, "rotation_degrees": 0.01, "translation_dmm": 0.00001, "canonical_mean": 0.00001, "normalized_code_max_abs": 0.001},
+  "jobs": [
+    {"id": "init_seed202", "kind": "initialization", "seed": 202},
+    {"id": "init_seed303", "kind": "initialization", "seed": 303},
+    {"id": "pose_antipodal", "kind": "pose_initialization", "operation": "negate_rotation_vector_and_translation_same_norm"},
+    {"id": "mask_erode1", "kind": "mask_boundary", "operation": "erode", "radius_pixels": 1},
+    {"id": "mask_dilate1", "kind": "mask_boundary", "operation": "dilate", "radius_pixels": 1},
+    {"id": "drop_front", "kind": "view_drop", "drop_camera": "az_+0"}
+  ],
+  "deferred": "Occlusion requires an explicit valid-region contract; unknown cameras and cross-case generalization are outside this pilot. No tuning or gate changes.",
+  "view_drop_weight_note": "The frozen unnormalized image residual and selection sum are retained; removing a view also changes relative prior weight. This checks the existing entire pipeline, not isolated information geometry."
+}

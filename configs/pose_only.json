@@ -1,0 +1,17 @@
+{
+  "fit_input": "D:\\WorkSpace\\Dental\\multiview_teeth_reconstruction\\runs\\forward_20260929T092217Z_b45f45ab\\fit_input",
+  "fixed_meshes": "D:\\WorkSpace\\Dental\\multiview_teeth_reconstruction\\runs\\forward_20260929T092217Z_b45f45ab\\meshes\\training_case",
+  "initial_rotation_degrees_xyz": [7.0, -5.0, 9.0],
+  "initial_translation_dmm": [0.08, -0.06, 0.05],
+  "contour_outer_iterations": 5,
+  "max_boundary_samples_per_tooth_per_view": 120,
+  "max_contour_pair_distance_pixels": 40.0,
+  "centroid_regularizer_weight": 0.1,
+  "robust_loss_scale_pixels": 3.0,
+  "acceptance": {
+    "max_rotation_error_degrees": 1.0,
+    "max_translation_error_dmm": 0.02,
+    "min_final_mean_tooth_iou": 0.85,
+    "min_mean_tooth_iou_gain": 0.5
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "base_config": "configs/shape_only.json",
+  "perturbation_rng": "per_label_seedsequence",
+  "outer_iterations": 10,
+  "stop_after_no_best_iterations": 4,
+  "config_overrides": {
+    "sampling_padding_cells": 8,
+    "initial_code_damping": 1.0,
+    "local_trust_retries": 4
+  },
+  "acceptance": {
+    "max_gradient_relative_error": 0.005,
+    "min_active_mean_tooth_iou": 0.93,
+    "min_active_iou_gain": 0.002,
+    "min_active_iou_error_reduction_fraction": 0.3,
+    "min_surface_mean_improvement_fraction": 0.2,
+    "min_heldout_active_iou_gain": 0.002,
+    "min_heldout_iou_error_reduction_fraction": 0.2,
+    "max_individual_surface_degradation_fraction": 0.05,
+    "max_individual_surface_p95_degradation_fraction": 0.1
+  },
+  "stages": [
+    {"id": "a_repeat_2", "active_labels": [11,21], "sigma": 0.25, "seeds": [101,202,303]},
+    {"id": "b_perturb_2", "active_labels": [11,21], "sigma": 0.5, "seeds": [101,202,303], "requires": "a_repeat_2"},
+    {"id": "c_incisors_4", "active_labels": [11,12,21,22], "sigma": 0.25, "seeds": [101,202,303], "requires": "a_repeat_2"},
+    {"id": "d_anterior_6", "active_labels": [11,12,13,21,22,23], "sigma": 0.25, "seeds": [101,202,303], "requires": "c_incisors_4"},
+    {"id": "e_premolars_10", "active_labels": [11,12,13,14,15,21,22,23,24,25], "sigma": 0.25, "seeds": [101,202], "requires": "d_anterior_6"},
+    {"id": "f_full_14", "active_labels": [11,12,13,14,15,16,17,21,22,23,24,25,26,27], "sigma": 0.25, "seeds": [101,202], "requires": "e_premolars_10"}
+  ]
+}

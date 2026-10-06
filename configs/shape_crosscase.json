@@ -1,0 +1,10 @@
+{
+  "forward_config": "configs/forward_check.json",
+  "shape_config": "configs/shape_only.json",
+  "expansion_config": "configs/shape_expansion.json",
+  "exclude_cases": ["01328DDN_upper.npz"],
+  "selection_quantiles_in_execution_order": [0.5, 0.25, 0.75],
+  "seeds": [101, 202],
+  "sigma": 0.25,
+  "active_labels": [11,12,13,14,15,16,17,21,22,23,24,25,26,27]
+}

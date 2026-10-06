@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/NVlabs/nvdiffrast",
+  "commit": "253ac4fcea7de5f396371124af597e6cc957bfae",
+  "integration": "vendored_modified_source",
+  "local_change": "SM 12.x direct atomic accumulation path in csrc/common/common.h",
+  "license": "LICENSE.txt"
+}

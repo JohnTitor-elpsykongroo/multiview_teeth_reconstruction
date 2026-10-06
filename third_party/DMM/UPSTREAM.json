@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/cong-yi/DMM",
+  "commit": "4081275ae13ad482b789fb57df4855049b1a46b8",
+  "integration": "vendored_modified_source",
+  "note": "The project tracks local modifications as ordinary files. This is the donor revision, not the current project revision."
+}

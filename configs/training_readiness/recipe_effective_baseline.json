@@ -1,0 +1,30 @@
+{
+  "version": "effective_count_v1",
+  "reduction": "effective",
+  "weights": {
+    "surface": 3000.0,
+    "flip": 3000.0,
+    "offsurface": 500.0,
+    "normal": 100.0,
+    "eikonal": 50.0,
+    "correction": 500.0,
+    "smooth": 5.0,
+    "template_normal": 100.0,
+    "blend": 100.0,
+    "center": 1.0,
+    "latent": 1000000.0,
+    "global_surface": 300.0,
+    "global_offsurface": 20.0,
+    "global_normal": 10.0,
+    "global_eikonal": 5.0
+  },
+  "latent_init_std": 0.001,
+  "flip_threshold_model": 0.03,
+  "deformation_lr": 0.0001,
+  "reference_lr": 0.0001,
+  "latent_lr": 0.0001,
+  "lr_step_epochs": 30,
+  "lr_gamma": 1.0,
+  "gradient_clip_norm": 0.0,
+  "center_reduction": "present_teeth"
+}

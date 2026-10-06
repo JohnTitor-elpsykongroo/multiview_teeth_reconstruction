@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "every_epochs": 5,
+  "fit_steps": 100,
+  "learning_rate": 0.001,
+  "points_per_component": 128,
+  "offsurface_points": 1024,
+  "evaluation_points_per_component": 512,
+  "seed": 20261006,
+  "mesh_resolution": 48,
+  "mesh_samples_per_component": 1024,
+  "case_ids": null
+}

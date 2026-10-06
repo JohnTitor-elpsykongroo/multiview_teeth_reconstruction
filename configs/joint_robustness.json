@@ -1,0 +1,12 @@
+{
+  "control_run": "D:\\WorkSpace\\Dental\\multiview_teeth_reconstruction\\runs\\joint_warmup_20261004T043110Z_ddd095ce",
+  "max_workers": 2,
+  "jobs": [
+    {"id":"init_seed202","kind":"initialization","seed":202},
+    {"id":"init_seed303","kind":"initialization","seed":303},
+    {"id":"mask_erode1","kind":"mask_boundary","operation":"erode","radius_pixels":1},
+    {"id":"mask_dilate1","kind":"mask_boundary","operation":"dilate","radius_pixels":1},
+    {"id":"views_left_right","kind":"view_drop","drop_camera":"az_+0"}
+  ],
+  "scope":"pilot robustness of current two-teeth Joint solver; preserve all failures; clean three-view/heldout/3D evaluation; no prior calibration or occlusion modeling"
+}

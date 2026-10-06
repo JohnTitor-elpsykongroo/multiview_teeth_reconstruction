@@ -1,0 +1,157 @@
+{
+  "contract_id": "dual_arch_static_semantic",
+  "version": "1.0.0",
+  "artifact_kind": "contract_defaults",
+  "status": "DATA_SCENE_INTERFACES_IMPLEMENTED",
+  "scope": "known_camera_static_dual_arch_synthetic",
+  "representation_profile": "coupled_component_dmm",
+  "units": {
+    "source_unit_evidence_required": true,
+    "scene_length": "mm",
+    "rotation": "rad",
+    "model_length": "dimensionless",
+    "model_unit_mm": 50,
+    "per_case_scale_fit": false,
+    "per_arch_scale_fit": false
+  },
+  "coordinates": {
+    "handedness": "right",
+    "arch_axes": {
+      "x": "patient_left",
+      "y": "posterior",
+      "z": "superior"
+    },
+    "vector_convention": "column",
+    "pose_mapping": "x_world_mm = T_world_from_arch @ x_arch_mm_h",
+    "camera_mapping": "x_camera_mm = T_camera_from_world @ x_world_mm_h",
+    "camera_axes": {
+      "x": "image_right",
+      "y": "image_down",
+      "z": "forward"
+    },
+    "pixel_centers": "integer_top_left_0_0",
+    "rigid_matrix_tolerance": 0.00001
+  },
+  "arches": {
+    "upper": {
+      "tooth_fdi": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "gum_component_id": "upper:gum"
+    },
+    "lower": {
+      "tooth_fdi": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "gum_component_id": "lower:gum"
+    }
+  },
+  "parameters": {
+    "shared_per_scene": [
+      "upper.component_latents",
+      "lower.component_latents",
+      "upper.T_world_from_arch",
+      "lower.T_world_from_arch"
+    ],
+    "trainable": [
+      "present_tooth_latents",
+      "upper_arch_pose_6dof",
+      "lower_arch_pose_6dof"
+    ],
+    "fixed": [
+      "camera_intrinsics",
+      "camera_extrinsics",
+      "network_weights",
+      "presence",
+      "metric_scale",
+      "gum_latents_at_training_mean"
+    ],
+    "per_tooth_rigid_pose": false,
+    "extra_global_pose": false,
+    "latent_dimensions_from": "model_bundle"
+  },
+  "semantics": {
+    "label_dtype": "uint8",
+    "background_id": 0,
+    "ignore_id": 255,
+    "valid_mask_values": [
+      0,
+      1
+    ],
+    "invalid_pixel_rule": "valid==0 iff label==255",
+    "fixed_tooth_channel_count": 28,
+    "channel_order": "upper.tooth_fdi then lower.tooth_fdi",
+    "presence_source": "case_annotation",
+    "visibility_source": "per_view_observation",
+    "empty_view_policy": "retain_valid_negative_evidence",
+    "duplicate_view_policy": "reject_same_pose_intrinsics_mask_and_validity",
+    "gum_target": "background",
+    "occlusion": "joint_depth_buffer_all_present_components"
+  },
+  "cameras": {
+    "projection": "pinhole",
+    "distortion_model": "none",
+    "minimum_views_per_arch_with_visible_teeth": 2,
+    "view_count": "dynamic",
+    "xy_normalization": "centered_coordinates_divided_by_sqrt_width2_plus_height2"
+  },
+  "prior": {
+    "family": "empirical_component_mahalanobis",
+    "statistics_source": "original_present_training_components_only",
+    "mirrors_in_statistics": false,
+    "covariance_shrinkage_to_diagonal": 0.05,
+    "eigenvalue_floor_relative_to_mean_variance": 0.000001,
+    "minimum_sample_count": "latent_dim+1",
+    "initial_latent": "training_mean",
+    "distribution_claim": "quadratic_regularizer_not_verified_gaussian"
+  },
+  "training": {
+    "alignment": "rigid_only_after_verified_unit_conversion",
+    "embedding_row_order": "lexicographic_case_id_per_arch",
+    "split_group": "patient",
+    "mirror_group_with_original": true,
+    "presence_from_sampled_points": false,
+    "sdf_supervision": "surface_normals_eikonal_offsurface_repulsion",
+    "signed_distance_targets_required": false
+  },
+  "packaging": {
+    "fit_directory": "fit_input",
+    "truth_directory": "truth",
+    "model_directory": "model_bundle",
+    "initialization_directory": "initialization",
+    "fit_loader_allowlist_required": true,
+    "sha256_required": true,
+    "read_truth_during_fit": false
+  },
+  "compatibility": {
+    "legacy_reference_runs": "accepted_by_user_reference_only",
+    "automatic_migration": false,
+    "factorized_shape_pose_profile": "requires_new_contract_major_version"
+  }
+}

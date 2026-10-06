@@ -6,11 +6,11 @@
   "arch": "upper",
   "manifest": {
     "path": "../../../data/Teeth3DS_DualArch_v1/training/upper/manifest.json",
-    "sha256": "62beabe8af7809c33855ceb3ef20c189e482edf1914894f2fb845470ed10b751"
+    "sha256": "7bd597e8e0339117a8944c3df3ddca2e1bc6c6b9be7687aa6ef080dbbcbe2c25"
   },
   "canonical_reference": {
     "path": "../../../data/Teeth3DS_DualArch_v1/training/upper/canonical.json",
-    "sha256": "f94bdd83320fa36976cf1d03c6d0cdfa284e70bd30f7bcb20160d079b5cd5009"
+    "sha256": "fd000a50bcf4af20fc731982df449196f31f7527387e8bd9b44b724ac44eccc7"
   },
   "specs": {
     "path": "upper_specs.json",

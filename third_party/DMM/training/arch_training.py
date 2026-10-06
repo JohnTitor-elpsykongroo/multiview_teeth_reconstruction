@@ -6,6 +6,7 @@ bitwise equivalence to upstream training or validated model quality.
 """
 import hashlib
 import json
+import time
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,7 @@ from networks.dmm_net import DMM
 from dmm import IMPLEMENTATION_VERSION
 from dmm.provenance import source_fingerprint, upstream_commit, decoder_contract, training_runtime, project_revision
 from training.recipe import resolve_recipe, resolve_validation
+from training.diagnostics import optimizer_summary
 from dmm.validation import (array, header, read_json, reference, require, resolve_ref,
                          sha256, stamped, write_json)
 
@@ -230,11 +232,14 @@ def _train_arch(config_path, output_dir, device="cpu", resume=None):
                upstream_commit=commit, project_revision=project, manifest_path=str(dataset.manifest_path), manifest_sha256=manifest_hash, training_signature=signature,
                resume=None if resume is None else dict(path=str(Path(resume).resolve()), sha256=sha256(resume))))
     for epoch in range(start, config["epochs"]):
+        epoch_started = time.perf_counter()
+        optimizer_records = []
         dataset.set_epoch(epoch)
         order = np.random.default_rng(config["seed"] + epoch).permutation(len(dataset))
         totals, term_sums, term_counts = [], {}, {}
         rates = {g["name"]: g["lr"] for g in optimizer.param_groups}
         for index in order:
+            step_started = time.perf_counter()
             optimizer.zero_grad(set_to_none=True)
             loss, terms = system.loss(dataset[int(index)])
             require(bool(torch.isfinite(loss)), "nonfinite training loss")
@@ -243,14 +248,26 @@ def _train_arch(config_path, output_dir, device="cpu", resume=None):
             for group in optimizer.param_groups:
                 terms["gradient/" + group["name"]] = float(torch.stack([p.grad.detach().square().sum() for p in group["params"] if p.grad is not None]).sum().sqrt())
             if recipe["gradient_clip_norm"]:
-                torch.nn.utils.clip_grad_norm_(system.parameters(), recipe["gradient_clip_norm"], error_if_nonfinite=True)
+                preclip_norm = float(torch.nn.utils.clip_grad_norm_(system.parameters(), recipe["gradient_clip_norm"], error_if_nonfinite=True))
+                clip_scale = min(1., recipe["gradient_clip_norm"] / (preclip_norm + 1e-6))
+            else:
+                preclip_norm = float(np.sqrt(sum(terms['gradient/' + g['name']] ** 2 for g in optimizer.param_groups)))
+                clip_scale = 1.
             optimizer.step()
             require(all(bool(torch.isfinite(p).all()) for p in system.parameters()), "nonfinite training parameters")
+            step_record = dict(epoch=epoch + 1, case_id=dataset.selected[int(index)].metadata['case_id'],
+                loss=float(loss.detach()), preclip_norm=preclip_norm, clip_scale=clip_scale,
+                group_preclip_norm={g['name']: terms['gradient/' + g['name']] for g in optimizer.param_groups},
+                seconds=time.perf_counter() - step_started)
+            optimizer_records.append(step_record)
+            with (output / 'optimizer_steps.jsonl').open('a', encoding='utf-8') as stream:
+                stream.write(json.dumps(step_record, allow_nan=False) + '\n')
             totals.append(float(loss.detach()))
             for key, value in terms.items():
                 term_sums[key] = term_sums.get(key, 0.) + value
                 term_counts[key] = term_counts.get(key, 0) + 1
         mean_loss = float(np.mean(totals))
+        training_seconds = time.perf_counter() - epoch_started
         improved = mean_loss < best
         best = min(best, mean_loss)
         validation, val_improved = None, False
@@ -265,6 +282,8 @@ def _train_arch(config_path, output_dir, device="cpu", resume=None):
         record = dict(epoch=epoch + 1, mean_train_loss=mean_loss, best_train_loss=best,
                       mean_terms={k: v / term_counts[k] for k, v in term_sums.items()}, term_case_counts=term_counts,
                       learning_rates=rates, validation=validation, best_val_score=None if best_val == float("inf") else best_val)
+        record.update(optimizer_diagnostics=optimizer_summary(optimizer_records), training_seconds=training_seconds,
+                      epoch_seconds_before_checkpoint=time.perf_counter() - epoch_started)
         scheduler.step()
         with (output / "progress.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record, allow_nan=False) + "\n")

@@ -125,3 +125,11 @@ matching epochs avoids repeating that full validation four times for immutable
 inputs; it does not remove case hashing, increase fit/grid budgets or reuse fitted
 codes. Synthetic regression must match individual evaluation exactly except wall
 time, and the next GPU run must pass a real small batch/individual parity gate.
+
+Fixed-view previews use the oral viewing side: upper occlusal from inferior,
+lower occlusal from superior. Earlier previews used superior for both arches and
+can hide upper crowns behind generated gum/caps; preserve those historical images
+and regenerate separately with the corrected CPU viewer. This changes display
+ordering only, not fields, meshes or measured geometry. `preview.json` binds arch,
+viewing direction, script/evaluation/mesh SHA. Standard `_upper`/`_lower` IDs identify
+the arch; custom IDs require `--arch` and conflicting metadata is rejected.

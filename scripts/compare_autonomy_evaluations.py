@@ -17,6 +17,7 @@ def compare(baseline, candidate, baseline_config, candidate_config, factor):
         raise ValueError('controlled comparison accepts val only; test remains sealed')
     results = [checked_evaluation(folder)[0] for folder in (baseline,candidate)]
     raw = [read(path) for path in configs]
+    fit_factor = factor in ('fit_steps','gum_code_mode')
     for p,c,path in zip(provenance,raw,configs):
         if p['config_sha256'] != sha(path) or p['training_recipe'] != c['recipe']:
             raise ValueError('comparison config/recipe binding mismatch')
@@ -30,6 +31,9 @@ def compare(baseline, candidate, baseline_config, candidate_config, factor):
                 'runtime','fit_recipe_sha256','fit_recipe'):
         if provenance[0][key] != provenance[1][key]:
             raise ValueError(f'comparison protocol mismatch: {key}')
+    for key in ('fit_protocol_sha256','fit_protocol'):
+        if not fit_factor and provenance[0].get(key) != provenance[1].get(key):
+            raise ValueError(f'comparison protocol mismatch: {key}')
     expected = copy.deepcopy(raw[0])
     if factor == 'reduction':
         if (raw[0]['recipe']['version'],raw[0]['recipe']['reduction']) != ('masked_mean_v1','all_points') or (
@@ -41,11 +45,29 @@ def compare(baseline, candidate, baseline_config, candidate_config, factor):
         if before != 1e6 or after != 1e5:
             raise ValueError('unexpected latent weight control')
         expected['recipe']['weights']['latent'] = 1e5
+    elif fit_factor:
+        if provenance[0]['checkpoint_sha256'] != provenance[1]['checkpoint_sha256']:
+            raise ValueError('fit protocol control requires identical checkpoint SHA')
+        policies = [p.get('fit_protocol') for p in provenance]
+        for policy,p,result in zip(policies,provenance,results):
+            if not isinstance(policy,dict) or set(policy)!={'schema','arch','fit_steps','gum_code_mode'} or policy['schema']!='dmm_code_fit_protocol_v1' or policy['arch']!=raw[0]['arch'] or not p.get('fit_protocol_sha256'):
+                raise ValueError('fit protocol control requires explicit bound protocol')
+            if type(policy['fit_steps']) is not int or policy['fit_steps']<1 or policy['gum_code_mode'] not in ('temporary_fitted','fixed_train_mean'):
+                raise ValueError('invalid comparison code fit protocol')
+            if result.get('fit_protocol')!=policy or any(result['budget'].get(k)!=policy[k] for k in ('fit_steps','gum_code_mode')):
+                raise ValueError('result code fit protocol/budget binding mismatch')
+        required = (20,80) if factor=='fit_steps' else ('temporary_fitted','fixed_train_mean')
+        if (policies[0][factor],policies[1][factor]) != required:
+            raise ValueError('unexpected code fit protocol control')
+        changed=copy.deepcopy(policies[0]);changed[factor]=policies[1][factor]
+        if changed!=policies[1]:raise ValueError('candidate changes more than one code fit protocol factor')
     else:
         raise ValueError('unsupported controlled factor')
     if raw[1] != expected:
         raise ValueError('candidate changes more than the declared single factor')
-    if results[0]['budget'] != results[1]['budget'] or results[0]['fit_recipe'] != results[1]['fit_recipe'] or results[0]['fit_recipe'] != provenance[0]['fit_recipe']:
+    expected_budget=copy.deepcopy(results[0]['budget'])
+    if fit_factor: expected_budget[factor]=results[1]['budget'][factor]
+    if expected_budget != results[1]['budget'] or results[0]['fit_recipe'] != results[1]['fit_recipe'] or results[0]['fit_recipe'] != provenance[0]['fit_recipe']:
         raise ValueError('comparison result budget/fit recipe mismatch')
     maps = [{c['case_id']:c for c in result['cases']} for result in results]
     if set(maps[0]) != set(maps[1]) or not maps[0]:
@@ -91,6 +113,7 @@ def compare(baseline, candidate, baseline_config, candidate_config, factor):
             improved_case_count=sum(row['delta_mm']<0 for row in successful)),
         baseline_checkpoint_sha256=provenance[0]['checkpoint_sha256'],candidate_checkpoint_sha256=provenance[1]['checkpoint_sha256'],
         common_fit_recipe_sha256=provenance[0]['fit_recipe_sha256'],budget=results[0]['budget'],cases=cases,teeth=tooth_rows,
+        fit_protocols=[p.get('fit_protocol') for p in provenance],
         input_sha256={str(path):sha(path) for path in [*configs,*[folder/name for folder in (baseline,candidate)
                       for name in ('provenance.json','evaluation.json')]]},
         limitations='Paired fixed-cohort development diagnosis. No bootstrap, grid/fit/training-seed uncertainty or clinical acceptance. Negative delta favors candidate at this protocol only.')
@@ -101,7 +124,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('baseline','candidate','baseline-config','candidate-config','output'):
         parser.add_argument('--'+name,type=Path,required=True)
-    parser.add_argument('--factor',choices=('reduction','latent_weight'),required=True)
+    parser.add_argument('--factor',choices=('reduction','latent_weight','fit_steps','gum_code_mode'),required=True)
     args=parser.parse_args()
     if args.output.exists(): parser.error('output must be fresh')
     result=compare(args.baseline,args.candidate,args.baseline_config,args.candidate_config,args.factor)

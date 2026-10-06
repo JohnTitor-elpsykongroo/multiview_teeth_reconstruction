@@ -62,6 +62,12 @@ def inspect(checkpoint,evaluation,probe_config=None):
             if case['case_id'] not in eligible:
                 raise ValueError('case is not an original eligible checkpoint row')
             expected_mode = 'learned_train' if result['split']=='train' else 'temporary_fitted'
+            fixed_gum = result['split']=='val' and result.get('budget',{}).get('gum_code_mode')=='fixed_train_mean'
+            if fixed_gum:
+                protocol=provenance.get('fit_protocol')
+                if not isinstance(protocol,dict) or protocol.get('gum_code_mode')!='fixed_train_mean' or result.get('fit_protocol')!=protocol:
+                    raise ValueError('fixed gum protocol binding mismatch')
+                expected_mode='temporary_teeth_fixed_train_mean_gum'
             if case.get('code_mode') != expected_mode:
                 raise ValueError('unexpected code fitting mode')
             artifact = (folder/case['artifact_directory']).resolve()
@@ -86,6 +92,8 @@ def inspect(checkpoint,evaluation,probe_config=None):
                         learned=saved['system_state'][f'latents.{label}.weight'][eligible[case['case_id']]['embedding_row']].detach().cpu().numpy().astype(np.float64)
                         if not np.array_equal(code,learned):
                             raise ValueError('saved train code differs from its checkpoint learned row')
+                    if fixed_gum and label==0 and not np.array_equal(code,mu.astype(np.float32).astype(np.float64)):
+                        raise ValueError('saved fixed gum differs from exported training mean')
                     q = np.linalg.solve(factor,code-mu)
                     if not np.isfinite(q).all(): raise ValueError('nonfinite standardized code')
                     record['components'][str(label)] = dict(original_present_trained_count=len(support),support_case_ids=support,

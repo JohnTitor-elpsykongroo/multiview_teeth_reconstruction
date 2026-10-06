@@ -1,0 +1,6 @@
+{
+  "schema": "dmm_code_fit_protocol_v1",
+  "arch": "lower",
+  "fit_steps": 20,
+  "gum_code_mode": "fixed_train_mean"
+}

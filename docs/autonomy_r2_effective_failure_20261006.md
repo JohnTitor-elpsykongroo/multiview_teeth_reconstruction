@@ -103,6 +103,18 @@ record.
 
 ## Interpretation and next decision
 
+Lower follow-up `runs/autonomy_setup/latent_R2_effective_lower_20261006T1818`
+uses the two previously frozen original-train cases `00OMSZGW_lower` and
+`0145FC8N_lower`, first16 points/component, baseline/effective e5. All source,
+config, checkpoint, manifest/canonical and original observation bindings were
+verified. CPU time35.524s/300s. Learned semantic errors .104167/.072115 for
+baseline become .912500/.879808 for effective; training-mean replacement still
+gives .920833/.865385. Absolute learned SDF means .020559/.027639 become
+.046230/.049113 model units, not mesh distance. Study SHA:
+`65fbb45373b541f9120b9b65395dccc8add0a5335aedc8f25e3fd1276bae2385`.
+Lower native e5 has four no-zero failures; e10/e15 have four missing31 failures.
+Lower final and complete common comparisons remain pending at this observation.
+
 Effective's failure occurs with its own trained codes and cannot be attributed
 solely to validation temporary code fitting. On these frozen examples, the
 blended geometry is dominated by gum and lacks tooth surfaces.

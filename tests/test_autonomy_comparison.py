@@ -100,6 +100,47 @@ class ControlledComparisonTests(unittest.TestCase):
         self.assertIsNone(result['cases'][1]['delta_mm'])
         self.assertEqual(result['candidate_failed_case_count'],1)
 
+    def test_training_factor_comparison_rejects_different_code_fit_protocol(self):
+        self.candidate_provenance['fit_protocol_sha256']='d'*64
+        self.candidate_provenance['fit_protocol']=dict(gum_code_mode='fixed_train_mean',fit_steps=20)
+        self.save()
+        with self.assertRaisesRegex(ValueError,'protocol mismatch: fit_protocol'):
+            self.run_comparison()
+
+    def protocol_control(self,factor):
+        self.changed=copy.deepcopy(self.config)
+        self.candidate_provenance['checkpoint_sha256']=self.provenance['checkpoint_sha256']
+        before=dict(schema='dmm_code_fit_protocol_v1',arch='upper',fit_steps=20,gum_code_mode='temporary_fitted')
+        after=copy.deepcopy(before);after[factor]=80 if factor=='fit_steps' else 'fixed_train_mean'
+        for p,result,policy in ((self.provenance,self.result,before),(self.candidate_provenance,self.candidate_result,after)):
+            p.update(fit_protocol=policy,fit_protocol_sha256=str(policy))
+            result.update(fit_protocol=copy.deepcopy(policy))
+            result['budget'].update({k:policy[k] for k in ('fit_steps','gum_code_mode')})
+        self.save()
+
+    def test_fit_controls_require_same_checkpoint_and_preserve_failed_denominator(self):
+        self.protocol_control('fit_steps')
+        self.assertEqual(self.run_comparison('fit_steps')['delta_mm'],-.5)
+        self.candidate_result['cases'][1].update(status='FAILED',error='missing tooth')
+        self.candidate_result['cases'][1].pop('geometry')
+        self.candidate_result.update(successful_case_count=1,failed_case_count=1,failures=['b'],score_mm=None)
+        self.save();result=self.run_comparison('fit_steps')
+        self.assertIsNone(result['delta_mm']);self.assertEqual(result['requested_case_count'],2)
+        self.candidate_provenance['checkpoint_sha256']='changed';self.save()
+        with self.assertRaisesRegex(ValueError,'identical checkpoint'):
+            self.run_comparison('fit_steps')
+
+    def test_fixed_gum_control_rejects_other_budget_and_policy_changes(self):
+        self.protocol_control('gum_code_mode')
+        self.assertEqual(self.run_comparison('gum_code_mode')['delta_mm'],-.5)
+        self.candidate_result['budget']['seed']=99;self.save()
+        with self.assertRaisesRegex(ValueError,'budget/fit recipe mismatch'):self.run_comparison('gum_code_mode')
+        self.candidate_result['budget']['seed']=8
+        self.candidate_provenance['fit_protocol']['fit_steps']=80
+        self.candidate_result['fit_protocol']['fit_steps']=80
+        self.candidate_result['budget']['fit_steps']=80;self.save()
+        with self.assertRaisesRegex(ValueError,'more than one code fit protocol factor'):self.run_comparison('gum_code_mode')
+
     def test_test_split_rejected_before_metric_read_and_latent_control_supported(self):
         self.candidate_provenance['split']='test'
         self.save()

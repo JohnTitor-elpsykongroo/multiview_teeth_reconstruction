@@ -111,5 +111,25 @@ class FittedCodeTests(unittest.TestCase):
         self.assertEqual(result['failed'],1)
         self.assertIn('checkpoint learned row',result['cases'][0]['error'])
 
+    def test_fixed_gum_codes_require_bound_protocol_and_exact_export_mean(self):
+        folder,checkpoint,saved=self.fixture()
+        provenance=json.loads((folder/'provenance.json').read_text())
+        evaluation=json.loads((folder/'evaluation.json').read_text())
+        protocol=dict(schema='dmm_code_fit_protocol_v1',arch='upper',fit_steps=20,gum_code_mode='fixed_train_mean')
+        provenance.update(fit_protocol=protocol,fit_protocol_sha256='a'*64)
+        evaluation.update(fit_protocol=protocol,budget=dict(gum_code_mode='fixed_train_mean',fit_steps=20))
+        evaluation['cases'][0]['code_mode']='temporary_teeth_fixed_train_mean_gum'
+        (folder/'provenance.json').write_text(json.dumps(provenance));(folder/'evaluation.json').write_text(json.dumps(evaluation))
+        self.assertEqual(inspect(checkpoint,folder)['failed'],0)
+        artifact=folder/'case_0000'
+        with np.load(artifact/'codes.npz') as arrays:
+            values={k:arrays[k].copy() for k in arrays.files}
+        values['code_0']+=.001
+        np.savez(artifact/'codes.npz',**values)
+        (artifact/'field.json').write_text(json.dumps(dict(codes_sha256=sha(artifact/'codes.npz'))))
+        result=inspect(checkpoint,folder)
+        self.assertEqual(result['failed'],1)
+        self.assertIn('exported training mean',result['cases'][0]['error'])
+
 
 if __name__=='__main__': unittest.main()

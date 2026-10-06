@@ -47,9 +47,28 @@ def load_fit_recipe(path, arch):
     return resolved
 
 
-def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=None, *, fit_recipe=None):
+def resolve_fit_protocol(value, arch):
+    require(isinstance(value, dict) and set(value) == {'schema', 'arch', 'fit_steps', 'gum_code_mode'}
+            and value['schema'] == 'dmm_code_fit_protocol_v1' and value['arch'] == arch,
+            'code fit protocol schema/arch mismatch')
+    require(type(value['fit_steps']) is int and 1 <= value['fit_steps'] <= 10000,
+            'invalid code fit protocol steps')
+    require(value['gum_code_mode'] in ('temporary_fitted', 'fixed_train_mean'),
+            'invalid code fit protocol gum mode')
+    return dict(value)
+
+
+def fit_budget(config, protocol):
+    return dict(config, fit_steps=protocol['fit_steps'], gum_code_mode=protocol['gum_code_mode']) if protocol else config
+
+
+def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=None, *, fit_recipe=None, fit_protocol=None):
     cases = evaluation_cases(dataset, split, case_ids)
-    require(split != 'train' or fit_recipe is None, 'learned train evaluation does not fit codes')
+    require(split != 'train' or (fit_recipe is None and fit_protocol is None), 'learned train evaluation does not fit codes')
+    if fit_protocol is not None:
+        fit_protocol = resolve_fit_protocol(fit_protocol, dataset.arch)
+        config = fit_budget(config, fit_protocol)
+    fixed_gum = config.get('gum_code_mode') == 'fixed_train_mean'
     original_recipe = system.recipe
     if fit_recipe is not None:
         resolved = resolve_recipe(dict(learning_rate=.0001, recipe=fit_recipe))
@@ -65,7 +84,8 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
         for index, case in enumerate(cases):
             started = time.perf_counter()
             record = dict(case_id=case.metadata["case_id"], patient_id=case.metadata["patient_id"], split=split,
-                          status="FAILED", code_mode="learned_train" if split == "train" else "temporary_fitted")
+                          status="FAILED", code_mode="learned_train" if split == "train" else
+                          "temporary_teeth_fixed_train_mean_gum" if fixed_gum else "temporary_fitted")
             try:
                 fit, evaluation = validation_samples(case, dataset.arch, config, split=split)
                 codes = {}
@@ -76,15 +96,23 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
                         rows = [c.metadata["embedding_row"] for c in dataset.selected
                                 if c.metadata["augmentation_parent_id"] is None and label in c.components]
                         require(bool(rows), f"no original train support for component {label}")
-                        codes[label] = torch.nn.Parameter(system.latents[str(label)].weight[rows].detach().mean(0).clone())
+                        values = system.latents[str(label)].weight[rows].detach()
+                        if fixed_gum and label == 0:
+                            # Match exported bundle mu, computed in float64 then used in float32.
+                            mean = values.cpu().numpy().astype(np.float64).mean(0)
+                            codes[label] = torch.as_tensor(mean, dtype=values.dtype, device=device).clone()
+                        else:
+                            codes[label] = torch.nn.Parameter(values.mean(0).clone())
                 if split != "train":
-                    optimizer = torch.optim.Adam(codes.values(), lr=config["learning_rate"])
+                    fitted = [code for code in codes.values() if code.requires_grad]
+                    require(bool(fitted), 'no component codes available for fitting')
+                    optimizer = torch.optim.Adam(fitted, lr=config["learning_rate"])
                     for _ in range(config["fit_steps"]):
                         optimizer.zero_grad(set_to_none=True)
                         loss, _ = system.loss(fit, codes)
                         require(bool(torch.isfinite(loss)), "nonfinite evaluation fit loss")
                         loss.backward()
-                        require(all(c.grad is not None and bool(torch.isfinite(c.grad).all()) for c in codes.values()),
+                        require(all(c.grad is not None and bool(torch.isfinite(c.grad).all()) for c in fitted),
                                 "invalid evaluation code gradient")
                         optimizer.step()
                 require(all(bool(torch.isfinite(c).all()) for c in codes.values()), "nonfinite evaluation code")
@@ -103,6 +131,8 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
                     normal_cosine_error=float((1-F.cosine_similarity(grad, evaluation["normals"].to(device), dim=-1)).mean()),
                     semantic_error=float((predicted != truth).float().mean()),
                     gradient_norm_quantiles=np.quantile(grad.detach().norm(dim=-1).cpu().numpy(), [0, .5, .95, 1]).tolist())
+                if fit_protocol is not None:
+                    record['fitted_component_labels'] = [label for label, code in codes.items() if code.requires_grad]
                 components = {}
                 for label in case.components:
                     own = truth == label
@@ -154,24 +184,25 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
                 requested_case_count=len(cases), successful_case_count=len(scores), failed_case_count=len(failures),
                 score_mm=None if failures else float(np.mean(scores)), failures=failures, cases=records, budget=config,
                 fit_recipe=effective_fit_recipe,
+                fit_protocol=fit_protocol,
                 successful_only_diagnostics=descriptive,
                 scope="learned_train_reconstruction_not_unseen_points" if split == "train" else
                       "decoder_frozen_temporary_codes_disjoint_fit_evaluation_points_and_centers")
 
 
 def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu", test_protocol=None,
-                              fit_recipe_path=None):
+                              fit_recipe_path=None, fit_protocol_path=None):
     return _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, split=split, case_ids=case_ids,
-                device=device, test_protocol=test_protocol, fit_recipe_path=fit_recipe_path)
+                device=device, test_protocol=test_protocol, fit_recipe_path=fit_recipe_path, fit_protocol_path=fit_protocol_path)
 
 
 def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu",
-                                     test_protocol=None, fit_recipe_path=None, loaded=None):
+                                     test_protocol=None, fit_recipe_path=None, fit_protocol_path=None, loaded=None):
     from networks.dmm_net import DMM
     from training.arch_training import load_training_config, ArchTrainingSystem
     output = Path(output_dir).resolve()
     require(not output.exists(), "evaluation output must be fresh")
-    require(split != 'train' or fit_recipe_path is None, 'learned train evaluation does not fit codes')
+    require(split != 'train' or (fit_recipe_path is None and fit_protocol_path is None), 'learned train evaluation does not fit codes')
     config, dataset, centers, specs = load_training_config(config_path) if loaded is None else loaded
     saved = torch.load(checkpoint, map_location=device, weights_only=True)
     require(saved["arch"] == config["arch"] and saved["specs"] == specs
@@ -186,6 +217,9 @@ def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, sp
     budget = config["validation"]
     fit_recipe = None if fit_recipe_path is None else load_fit_recipe(fit_recipe_path, config['arch'])
     fit_recipe_sha256 = None if fit_recipe_path is None else sha256(fit_recipe_path)
+    fit_protocol = None if fit_protocol_path is None else resolve_fit_protocol(read_json(fit_protocol_path), config['arch'])
+    fit_protocol_sha256 = None if fit_protocol_path is None else sha256(fit_protocol_path)
+    effective_budget = fit_budget(budget, fit_protocol)
     if split == "val" and case_ids is None:
         case_ids = budget["case_ids"]
     cases = evaluation_cases(dataset, split, case_ids)
@@ -195,7 +229,7 @@ def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, sp
         protocol = read_json(test_protocol)
         require(protocol.get("stage") == "R4_FINAL_FROZEN" and protocol.get("checkpoint_sha256") == sha256(checkpoint)
                 and protocol.get("manifest_sha256") == sha256(dataset.manifest_path)
-                and protocol.get("evaluation_budget_sha256") == budget_digest(budget)
+                and protocol.get("evaluation_budget_sha256") == budget_digest(effective_budget)
                 and protocol.get("case_ids") == [c.metadata["case_id"] for c in cases], "test frozen protocol mismatch")
         require(case_ids is None, "final test evaluates all original test cases")
         require(protocol.get('fit_recipe_sha256') == fit_recipe_sha256,
@@ -203,6 +237,10 @@ def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, sp
         if fit_recipe is not None:
             require(protocol.get('fit_recipe_resolved_sha256') == budget_digest(fit_recipe),
                     'test frozen resolved fit recipe mismatch')
+        require(protocol.get('fit_protocol_sha256') == fit_protocol_sha256, 'test frozen code fit protocol file mismatch')
+        if fit_protocol is not None:
+            require(protocol.get('fit_protocol_resolved_sha256') == budget_digest(fit_protocol),
+                    'test frozen resolved code fit protocol mismatch')
     else:
         require(test_protocol is None, "test protocol only valid for test split")
     system = ArchTrainingSystem(DMM(specs, arch=config["arch"]), dataset, centers, config["recipe"]).to(device)
@@ -214,9 +252,10 @@ def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, sp
                manifest_sha256=sha256(dataset.manifest_path), canonical_reference_id=dataset.canonical_reference_id,
                training_recipe=config['recipe'], fit_recipe_sha256=fit_recipe_sha256,
                fit_recipe=fit_recipe if fit_recipe is not None else config['recipe'] if split != 'train' else None,
+               fit_protocol_sha256=fit_protocol_sha256, fit_protocol=fit_protocol,
                test_protocol_sha256=None if test_protocol is None else sha256(test_protocol)))
     try:
-        result = evaluate_cases(system, dataset, budget, split, case_ids, output, fit_recipe=fit_recipe)
+        result = evaluate_cases(system, dataset, budget, split, case_ids, output, fit_recipe=fit_recipe, fit_protocol=fit_protocol)
         write_json(output / "evaluation.json", result)
         return result
     except BaseException as exc:
@@ -224,7 +263,7 @@ def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, sp
         raise
 
 
-def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, case_ids=None, device='cpu', fit_recipe_path=None):
+def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, case_ids=None, device='cpu', fit_recipe_path=None, fit_protocol_path=None):
     """Validate one frozen config/dataset once, then evaluate checkpoints in isolation.
 
     Each model/embedding table and temporary codes are reconstructed independently;
@@ -233,7 +272,7 @@ def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, ca
     from training.arch_training import load_training_config
     from dmm.validation import resolve_ref
     require(split in ('train','val'), 'checkpoint batch excludes test')
-    require(split != 'train' or fit_recipe_path is None, 'learned train evaluation does not fit codes')
+    require(split != 'train' or (fit_recipe_path is None and fit_protocol_path is None), 'learned train evaluation does not fit codes')
     paths = [Path(path).resolve() for path in checkpoints]
     require(bool(paths) and len(set(paths)) == len(paths), 'batch needs unique checkpoint paths')
     output = Path(output_dir).resolve()
@@ -242,11 +281,13 @@ def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, ca
     config_sha = sha256(config_path)
     source_sha = source_fingerprint()
     fit_sha = None if fit_recipe_path is None else sha256(fit_recipe_path)
+    protocol_sha = None if fit_protocol_path is None else sha256(fit_protocol_path)
     checkpoint_sha = [sha256(path) for path in paths]
     loaded = load_training_config(config_path)
     output.mkdir(parents=True, exist_ok=False)
     batch = dict(schema='dmm_checkpoint_evaluation_batch_v1', split=split, status='EVALUATION_BATCH_RUNNING',
                  config_sha256=config_sha, evaluation_source_sha256=source_sha, fit_recipe_sha256=fit_sha,
+                 fit_protocol_sha256=protocol_sha,
                  completed=[], runtime=training_runtime(device),
                  scope='one full dataset validation; each case NPZ rehashed; each checkpoint independently reconstructed')
     write_json(output/'batch.json', batch)
@@ -254,12 +295,13 @@ def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, ca
         for index,path in enumerate(paths):
             require(sha256(config_path) == config_sha and source_fingerprint() == source_sha, 'batch config/source drift')
             require((None if fit_recipe_path is None else sha256(fit_recipe_path)) == fit_sha, 'batch fit recipe drift')
+            require((None if fit_protocol_path is None else sha256(fit_protocol_path)) == protocol_sha, 'batch code fit protocol drift')
             require(sha256(path) == checkpoint_sha[index], 'batch checkpoint drift')
             for key in ('manifest','canonical_reference','specs'):
                 resolve_ref(config_path, loaded[0][key])
             folder = output / f'checkpoint_{index:04d}'
             result = _evaluate_checkpoint_cases_loaded(config_path, path, folder, split=split, case_ids=case_ids,
-                          device=device, fit_recipe_path=fit_recipe_path, loaded=loaded)
+                          device=device, fit_recipe_path=fit_recipe_path, fit_protocol_path=fit_protocol_path, loaded=loaded)
             provenance = read_json(folder/'provenance.json')
             batch['completed'].append(dict(checkpoint=str(path), checkpoint_sha256=checkpoint_sha[index],
                 epoch=provenance['training_epoch'], directory=folder.name, status=result['status'],

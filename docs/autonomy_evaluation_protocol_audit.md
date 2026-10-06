@@ -49,6 +49,16 @@ telemetry failures, and never reconstructs old missing val codes from train rows
 
 ## Diagnostic sequence after the active control
 
+The independent evaluator now prepares `--fit-protocol` and
+`configs/autonomy/evaluation_protocol_v1/`: explicit temporary20/temporary80 and
+fixed-training-mean-gum20 files for each arch. This is tooling preparation, not a
+protocol change to active17f8. Protocol files bind actual steps/gum mode in
+provenance and result budgets; a final-test protocol must also bind their file and
+resolved hashes. Default fitting remains the original path. Fixed gum uses the
+exported float64 mean in float32 and only tooth codes enter Adam. See that
+directory's README for evaluation and seal details. Standardized-q fitting is
+still a separate, unimplemented research protocol.
+
 First inspect every matched-epoch common comparison, native failures, tooth mean
 and point P95, learned-train/val gap, area/topology, clipping and resource budget.
 Do not pick the best native effective score as an isolated training-factor result.

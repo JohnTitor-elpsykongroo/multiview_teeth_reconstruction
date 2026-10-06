@@ -119,12 +119,19 @@ class EvaluationTests(unittest.TestCase):
             def query(self, points, codes):
                 return dict(sdf=torch.ones(len(points), device=points.device))
         artifact = self.root/'failed_field'
+        code = torch.tensor([.25, -.5], requires_grad=True)
         with self.assertRaisesRegex(ContractError, 'no finite zero surface'):
-            mesh_metrics(ConstantField(), {}, {}, [[-1]*3,[1]*3], self.config['validation'], artifact_dir=artifact)
+            mesh_metrics(ConstantField(), {0: code}, {}, [[-1]*3,[1]*3], self.config['validation'], artifact_dir=artifact)
         field = read_json(artifact/'field.json')
         self.assertEqual(field['minimum'], 1.)
         self.assertEqual(field['negative_fraction'], 0.)
         self.assertFalse((artifact/'mesh.npz').exists())
+        self.assertEqual(field['codes_sha256'], sha256(artifact/'codes.npz'))
+        with np.load(artifact/'codes.npz', allow_pickle=False) as codes:
+            self.assertEqual(set(codes.files), {'model_unit_mm', 'code_0'})
+            self.assertEqual(codes['model_unit_mm'].item(), 50)
+            np.testing.assert_array_equal(codes['code_0'], code.detach().numpy())
+        torch.testing.assert_close(code, torch.tensor([.25, -.5]), rtol=0, atol=0)
 
     def test_common_fit_recipe_is_used_and_original_recipe_and_parameters_restored(self):
         recipe = copy.deepcopy(self.system.recipe)

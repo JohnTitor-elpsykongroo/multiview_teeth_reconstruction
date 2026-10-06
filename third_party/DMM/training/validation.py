@@ -65,11 +65,19 @@ def mesh_metrics(model, codes, sample, box, config, *, artifact_dir=None):
     boundary = np.concatenate([volume[0].ravel(), volume[-1].ravel(), volume[:, 0].ravel(), volume[:, -1].ravel(), volume[:, :, 0].ravel(), volume[:, :, -1].ravel()])
     if artifact_dir is not None:
         from pathlib import Path
-        from dmm.validation import write_json
+        from dmm.validation import write_json, sha256
         artifact_dir = Path(artifact_dir)
         artifact_dir.mkdir(parents=True, exist_ok=False)
+        # Preserve the exact evaluated codes, including a failed surface. Later
+        # grid diagnostics must not silently refit val codes or reuse train rows.
+        frozen_codes = {f"code_{label}": code.detach().cpu().numpy().copy()
+                        for label, code in codes.items()}
+        require(all(value.ndim == 1 and np.isfinite(value).all() for value in frozen_codes.values()),
+                "invalid saved evaluation code")
+        np.savez_compressed(artifact_dir / "codes.npz", model_unit_mm=MODEL_UNIT_MM, **frozen_codes)
         finite = np.isfinite(volume)
         write_json(artifact_dir / "field.json", dict(resolution=resolution, finite=bool(finite.all()),
+                   codes_sha256=sha256(artifact_dir / "codes.npz"),
                    minimum=float(volume[finite].min()) if finite.any() else None,
                    maximum=float(volume[finite].max()) if finite.any() else None,
                    negative_fraction=float((volume < 0).mean()),

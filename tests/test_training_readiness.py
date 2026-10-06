@@ -199,6 +199,14 @@ class GeometryTests(unittest.TestCase):
         points=np.concatenate((np.eye(3),-np.eye(3))).astype(np.float32)*.3
         sample=dict(points=torch.tensor(points),labels=torch.full((6,),11),components=(0,11))
         metrics=mesh_metrics(state.decoder,state.codes(),sample,[[-.6]*3,[.6]*3],cfg)
+        with tempfile.TemporaryDirectory() as directory:
+            artifact=Path(directory)/'mesh'
+            saved=mesh_metrics(state.decoder,state.codes(),sample,[[-.6]*3,[.6]*3],cfg,artifact_dir=artifact)
+            self.assertEqual(saved,metrics)
+            with np.load(artifact/'codes.npz',allow_pickle=False) as arrays:
+                restored={int(key[5:]):torch.tensor(arrays[key]) for key in arrays.files if key.startswith('code_')}
+            repeated=mesh_metrics(state.decoder,restored,sample,[[-.6]*3,[.6]*3],cfg)
+            self.assertEqual(repeated,metrics)
         self.assertTrue(np.isfinite(metrics["score_mm"]))
         self.assertEqual(metrics["boundary_edges"],0)
         self.assertEqual(len(cube_rotations()),24)

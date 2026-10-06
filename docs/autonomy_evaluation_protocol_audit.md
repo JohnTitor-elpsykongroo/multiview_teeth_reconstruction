@@ -107,3 +107,31 @@ Do not invent a clinical millimeter threshold, discard hard cases, shift the iso
 surface, or approve a model only because a mean score improves. Freeze any
 revised selection protocol before R3/R4; keep the original measurements distinct.
 R4 final test remains sealed until checkpoint and protocol selection are frozen.
+
+The separate `scripts/remesh_autonomy_val.py` implements step 2 for new val
+artifacts. It reads exact saved post-fit `codes.npz`, with no optimizer or learned
+embedding substitution. It rejects train/test before checkpoint or metric reads,
+requires an original val row and checkpoint/data/presence/unit bindings, verifies
+the code SHA against `field.json`, and checks every original-grid tooth metric
+within 1e-5mm before changing resolution. Fixed-gum artifacts additionally require
+the bound protocol and the exact float32 exported train mean. Any invalid grid
+stops, preserving codes, geometry and `study_partial.json`; this does not confer
+quality acceptance or select a checkpoint.
+
+After a fresh evaluation has saved these artifacts, a frozen CPU plan can invoke:
+
+```sh
+CUDA_VISIBLE_DEVICES='' .venv/bin/python scripts/remesh_autonomy_val.py \
+  --checkpoint FROZEN_EPOCH.pth --evaluation FRESH_VAL_EVALUATION \
+  --case-id PREDECLARED_VAL_CASE --output FRESH_DIAGNOSTIC_DIRECTORY \
+  --resolutions 48 64 80 --threads 8
+```
+
+The caller must enforce the recorded 900-second monotonic cap and preserve input
+hashes and any failures. `--probe-config` binds the exact frozen config when old
+provenance omits manifest/canonical fields. It cannot recover an old fit without
+saved codes. The existing train remesher remains train-only. Six new CPU tests
+exercise real synthetic marching-cubes geometry, exact post-fit code restoration
+distinct from embedding rows, no fitting, early split rejection, hash/presence
+gates, failure preservation and fixed-gum binding. They are tooling verification,
+not an actual held-out patient resolution experiment.

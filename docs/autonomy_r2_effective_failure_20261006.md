@@ -78,6 +78,29 @@ retained and the exact review script ran in WSL without repeating geometry.
 All CPU processes explicitly disabled CUDA. Existing geometry and artifact
 contracts were used; no environment changes or second GPU job occurred.
 
+## Final epoch 20 fixed-code follow-up
+
+`runs/autonomy_setup/grid_R2_effective_train_final_20261006T1812` repeats the same
+six checks at epoch20 within an independent 600-second CPU budget, with unchanged
+points, presence, grid and sampling. Runtime was 55.389 seconds. Study SHA:
+`0937cae6f2e7f9ccd6802d87763d3e5a903f9bfe6ae1227da3a37d366df01feb`.
+Effective epoch20 checkpoint SHA:
+`7c634ac3fcbb204686c0e579eece26e7954dcdc158c0c3636fe06790a7c900fc`.
+
+Baseline learned meshes pass in both cases (1.298916/1.407459 mm). Effective
+learned meshes fail with first-reported missing labels 11/12; the complete face
+audit finds 12/3 present tooth labels missing. Training-mean meshes fail with
+12/5 missing labels. Some tooth-labelled surfaces have emerged since epoch10;
+the final meshes are not all gum, but remain invalid under unchanged gates.
+Their smaller gum area fractions do not compensate for missing tooth surfaces.
+
+Raw rows and artifacts were correct. The first summary template repeated FDI11
+for both cases and copied the preceding study duration; it is preserved as
+`initial_template_*`. `correct_final_geometry_review.py` derives the corrected
+canonical review/decision from the original epoch20 rows and actual status,
+without rerunning geometry. This correction is part of the reproducibility
+record.
+
 ## Interpretation and next decision
 
 Effective's failure occurs with its own trained codes and cannot be attributed

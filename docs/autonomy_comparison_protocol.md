@@ -37,3 +37,24 @@ Merge these evaluation changes only after the frozen 4fd0d5a driver completes an
 its results are inspected. Re-run target preflight on the next committed version.
 Run a small real-dental native/common parity gate before another bounded GPU
 comparison; passing synthetic regression alone does not replace that gate.
+
+`scripts/compare_autonomy_evaluations.py` compares completed val artifacts only:
+
+```sh
+python scripts/compare_autonomy_evaluations.py \
+  --baseline runs/baseline_common_upper_epoch15 \
+  --candidate runs/effective_common_upper_epoch15 \
+  --baseline-config configs/autonomy/r2_baseline/upper.json \
+  --candidate-config configs/autonomy/r2_effective/upper.json \
+  --factor reduction --output runs/comparison_upper_epoch15
+```
+
+The CPU tool enforces exact config hashes and the declared single factor, matching
+epochs, manifest/canonical IDs, evaluation source/runtime, explicit common fit
+recipe, budgets, patient cohorts, point partitions and present tooth metrics.
+It outputs paired case/tooth deltas with negative values favoring the candidate
+at that protocol. A failed case leaves the full cohort delta null; successful-pair
+diagnostics are labeled separately. It neither selects a checkpoint nor estimates
+grid, fitting, patient or training-seed uncertainty. Its optional `latent_weight`
+factor supports the isolated 1e6-to-1e5 control with baseline reduction; extra
+changes are rejected. Test/train provenance is rejected before opening metrics.

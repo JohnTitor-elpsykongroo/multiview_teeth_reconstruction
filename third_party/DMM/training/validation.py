@@ -12,9 +12,10 @@ from dmm import MODEL_UNIT_MM
 from dmm.validation import require, sha256, ContractError
 
 
-def validation_samples(case, arch, config):
-    require(case.metadata["split"] == "val" and case.metadata["augmentation_parent_id"] is None,
-            "validation accepts original val cases only")
+def validation_samples(case, arch, config, *, split="val"):
+    require(split in ("train", "val", "test"), "unsupported evaluation split")
+    require(case.metadata["split"] == split and case.metadata["augmentation_parent_id"] is None,
+            f"evaluation accepts original {split} cases only")
     require(sha256(case.sample_path) == case.metadata["samples"]["sha256"], "validation sample hash mismatch")
     seed_id = int.from_bytes(hashlib.sha256(case.metadata["case_id"].encode()).digest()[:4], "little")
     rng = np.random.default_rng(np.random.SeedSequence([config["seed"], seed_id]))
@@ -48,7 +49,7 @@ def validation_samples(case, arch, config):
     return samples
 
 
-def mesh_metrics(model, codes, sample, box, config):
+def mesh_metrics(model, codes, sample, box, config, *, artifact_dir=None):
     from skimage.measure import marching_cubes
     from scipy.spatial import cKDTree
     device = next(model.parameters()).device
@@ -61,8 +62,19 @@ def mesh_metrics(model, codes, sample, box, config):
             return np.concatenate([model.query(torch.as_tensor(p, dtype=torch.float32, device=device), codes)[key].cpu().numpy()
                                    for p in np.array_split(data, max(1, int(np.ceil(len(data)/2048))))])
     volume = query(grid, "sdf").reshape((resolution,) * 3)
-    require(np.isfinite(volume).all() and volume.min() < 0 < volume.max(), "no finite zero surface")
     boundary = np.concatenate([volume[0].ravel(), volume[-1].ravel(), volume[:, 0].ravel(), volume[:, -1].ravel(), volume[:, :, 0].ravel(), volume[:, :, -1].ravel()])
+    if artifact_dir is not None:
+        from pathlib import Path
+        from dmm.validation import write_json
+        artifact_dir = Path(artifact_dir)
+        artifact_dir.mkdir(parents=True, exist_ok=False)
+        finite = np.isfinite(volume)
+        write_json(artifact_dir / "field.json", dict(resolution=resolution, finite=bool(finite.all()),
+                   minimum=float(volume[finite].min()) if finite.any() else None,
+                   maximum=float(volume[finite].max()) if finite.any() else None,
+                   negative_fraction=float((volume < 0).mean()),
+                   boundary_nonpositive_count=int((boundary <= 0).sum()), boundary_count=len(boundary)))
+    require(np.isfinite(volume).all() and volume.min() < 0 < volume.max(), "no finite zero surface")
     require(bool((boundary > 0).all()), "non-positive domain boundary; truncated/invalid surface")
     vertices, faces, _, _ = marching_cubes(volume, 0, spacing=(box[1]-box[0])/(resolution-1))
     vertices += box[0]
@@ -70,6 +82,10 @@ def mesh_metrics(model, codes, sample, box, config):
     area = np.linalg.norm(np.cross(triangles[:, 1]-triangles[:, 0], triangles[:, 2]-triangles[:, 0]), axis=-1)/2
     labels = tuple(k for k in model.labels if k in codes)
     face_labels = np.asarray(labels)[query(triangles.mean(1), "weights").argmax(-1)]
+    if artifact_dir is not None:
+        np.savez_compressed(artifact_dir / "mesh.npz", vertices_model=vertices, faces=faces,
+                            face_labels=face_labels, model_unit_mm=MODEL_UNIT_MM,
+                            observed_points_model=sample["points"].numpy(), observed_labels=sample["labels"].numpy())
     rng = np.random.default_rng(config["seed"])
     truth = sample["points"].numpy()
     truth_labels = sample["labels"].numpy()

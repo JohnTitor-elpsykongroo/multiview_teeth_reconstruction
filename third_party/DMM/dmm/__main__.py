@@ -22,6 +22,14 @@ def main():
     evaluate.add_argument("--checkpoint", required=True)
     evaluate.add_argument("--output", required=True)
     evaluate.add_argument("--device", default="cpu")
+    evaluate_cases = commands.add_parser("evaluate-cases", help="learned train codes or explicit held-out val/test codes")
+    evaluate_cases.add_argument("--config", required=True)
+    evaluate_cases.add_argument("--checkpoint", required=True)
+    evaluate_cases.add_argument("--output", required=True)
+    evaluate_cases.add_argument("--split", choices=["train", "val", "test"], required=True)
+    evaluate_cases.add_argument("--case-id", action="append", help="repeat original IDs; train IDs must have been trained")
+    evaluate_cases.add_argument("--device", default="cpu")
+    evaluate_cases.add_argument("--test-protocol", help="frozen final checkpoint, budget, data and complete test cohort")
     prepare = commands.add_parser("prepare-scene", help="validate stage-3 candidate and copy a fresh fit package")
     prepare.add_argument("candidate")
     prepare.add_argument("--output", required=True)
@@ -98,6 +106,10 @@ def main():
     elif args.command == "evaluate-checkpoint":
         from training.arch_training import evaluate_checkpoint
         result = evaluate_checkpoint(args.config, args.checkpoint, args.output, args.device)
+    elif args.command == "evaluate-cases":
+        from training.evaluation import evaluate_checkpoint_cases
+        result = evaluate_checkpoint_cases(args.config, args.checkpoint, args.output, split=args.split,
+                    case_ids=args.case_id, device=args.device, test_protocol=args.test_protocol)
     elif args.command == "validate-training":
         from training.arch_training import load_training_config
         from data.arch_dataset import validate_patient_splits

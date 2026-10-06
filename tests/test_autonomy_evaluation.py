@@ -13,7 +13,7 @@ from data.arch_dataset import TrainingCase
 from dmm.validation import ContractError, read_json, write_json, reference, sha256
 from networks.dmm_net import DMM
 from training.arch_training import ArchTrainingSystem, load_training_config, train_arch
-from training.evaluation import evaluation_cases, evaluate_cases, evaluate_checkpoint_cases, budget_digest
+from training.evaluation import evaluation_cases, evaluate_cases, evaluate_checkpoint_cases, budget_digest, load_fit_recipe
 from training.validation import validation_samples, mesh_metrics
 
 torch.set_num_threads(1)
@@ -125,6 +125,68 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(field['minimum'], 1.)
         self.assertEqual(field['negative_fraction'], 0.)
         self.assertFalse((artifact/'mesh.npz').exists())
+
+    def test_common_fit_recipe_is_used_and_original_recipe_and_parameters_restored(self):
+        recipe = copy.deepcopy(self.system.recipe)
+        recipe['weights']['surface'] *= 2
+        original = self.system.recipe
+        before = {k: v.clone() for k,v in self.system.state_dict().items()}
+        loss = self.system.loss
+        observed = []
+        def inspect(sample, codes):
+            observed.append(copy.deepcopy(self.system.recipe))
+            return loss(sample, codes)
+        with patch.object(self.system, 'loss', side_effect=inspect), \
+             patch('training.evaluation.mesh_metrics', side_effect=ContractError('controlled geometry failure')):
+            result = evaluate_cases(self.system, self.data, self.config['validation'], 'val', fit_recipe=recipe)
+        self.assertEqual(len(observed), self.config['validation']['fit_steps'])
+        self.assertTrue(all(value == recipe for value in observed))
+        self.assertEqual(result['fit_recipe'], recipe)
+        self.assertIs(self.system.recipe, original)
+        for key,value in self.system.state_dict().items():
+            torch.testing.assert_close(value, before[key], rtol=0, atol=0)
+        with self.assertRaisesRegex(ContractError, 'does not fit'):
+            evaluate_cases(self.system, self.data, self.config['validation'], 'train', fit_recipe=recipe)
+
+    def test_explicit_fit_recipe_is_fully_resolved_and_test_protocol_bound(self):
+        recipe = copy.deepcopy(self.system.recipe)
+        recipe['weights']['surface'] *= 2
+        fit_path = self.root/'fit_recipe.json'
+        write_json(fit_path, dict(schema='dmm_latent_fit_recipe_v1', arch='upper', recipe=recipe))
+        self.assertEqual(load_fit_recipe(fit_path, 'upper'), recipe)
+        with self.assertRaisesRegex(ContractError, 'arch mismatch'):
+            load_fit_recipe(fit_path, 'lower')
+        with patch('training.validation.mesh_metrics', return_value=dict(score_mm=1.)):
+            train_arch(self.path, self.root/'training')
+        checkpoint = self.root/'training/final.pth'
+        protocol = dict(stage='R4_FINAL_FROZEN', checkpoint_sha256=sha256(checkpoint),
+            manifest_sha256=sha256(self.data.manifest_path), evaluation_budget_sha256=budget_digest(self.config['validation']),
+            case_ids=['case4'])
+        protocol_path = self.root/'protocol.json'
+        write_json(protocol_path, protocol)
+        with self.assertRaisesRegex(ContractError, 'fit recipe file mismatch'):
+            evaluate_checkpoint_cases(self.path, checkpoint, self.root/'missing_binding', split='test',
+                test_protocol=protocol_path, fit_recipe_path=fit_path)
+        protocol['fit_recipe_sha256'] = sha256(fit_path)
+        protocol['fit_recipe_resolved_sha256'] = budget_digest(recipe)
+        write_json(protocol_path, protocol)
+        with patch('training.evaluation.mesh_metrics', return_value=dict(score_mm=2.)):
+            result = evaluate_checkpoint_cases(self.path, checkpoint, self.root/'bound', split='test',
+                test_protocol=protocol_path, fit_recipe_path=fit_path)
+        self.assertEqual(result['fit_recipe'], recipe)
+        del recipe['normal_epsilon']
+        write_json(fit_path, dict(schema='dmm_latent_fit_recipe_v1', arch='upper', recipe=recipe))
+        with self.assertRaisesRegex(ContractError, 'every field'):
+            load_fit_recipe(fit_path, 'upper')
+
+    def test_baseline_common_recipe_reproduces_default_fitting_exactly(self):
+        with patch('training.evaluation.mesh_metrics', return_value=dict(score_mm=1.)):
+            native = evaluate_cases(self.system, self.data, self.config['validation'], 'val')
+            common = evaluate_cases(self.system, self.data, self.config['validation'], 'val',
+                                    fit_recipe=copy.deepcopy(self.system.recipe))
+        for result in (native, common):
+            for case in result['cases']: case.pop('seconds')
+        self.assertEqual(native, common)
 
 
 if __name__ == '__main__':

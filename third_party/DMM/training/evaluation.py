@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from dmm.provenance import source_fingerprint, training_runtime, validate_decoder_binding
 from dmm.validation import require, read_json, sha256, write_json, ContractError
 from training.validation import validation_samples, mesh_metrics
+from training.recipe import resolve_recipe
 
 
 def evaluation_cases(dataset, split, case_ids=None):
@@ -36,8 +37,25 @@ def budget_digest(config):
     return hashlib.sha256(json.dumps(config, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=None):
+def load_fit_recipe(path, arch):
+    value = read_json(path)
+    require(isinstance(value, dict), 'fit recipe must be a mapping')
+    require(set(value) == {'schema', 'arch', 'recipe'} and value['schema'] == 'dmm_latent_fit_recipe_v1'
+            and value['arch'] == arch, 'fit recipe schema/arch mismatch')
+    resolved = resolve_recipe(dict(learning_rate=.0001, recipe=value['recipe']))
+    require(resolved == value['recipe'], 'fit recipe must explicitly resolve every field and weight')
+    return resolved
+
+
+def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=None, *, fit_recipe=None):
     cases = evaluation_cases(dataset, split, case_ids)
+    require(split != 'train' or fit_recipe is None, 'learned train evaluation does not fit codes')
+    original_recipe = system.recipe
+    if fit_recipe is not None:
+        resolved = resolve_recipe(dict(learning_rate=.0001, recipe=fit_recipe))
+        require(resolved == fit_recipe, 'fit recipe must explicitly resolve every field and weight')
+        system.recipe = resolved
+    effective_fit_recipe = system.recipe if split != 'train' else None
     flags = [(p, p.requires_grad) for p in system.parameters()]
     was_training = system.training
     device = next(system.parameters()).device
@@ -111,6 +129,7 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
                 # Preserve partial progress even if a later case/process fails.
                 write_json(Path(artifact_root) / "cases_partial.json", records)
     finally:
+        system.recipe = original_recipe
         system.train(was_training)
         for parameter, enabled in flags:
             parameter.requires_grad_(enabled)
@@ -134,16 +153,19 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
     return dict(status="EVALUATION_FAILED" if failures else "EVALUATED_NOT_QUALITY_ACCEPTED", split=split,
                 requested_case_count=len(cases), successful_case_count=len(scores), failed_case_count=len(failures),
                 score_mm=None if failures else float(np.mean(scores)), failures=failures, cases=records, budget=config,
+                fit_recipe=effective_fit_recipe,
                 successful_only_diagnostics=descriptive,
                 scope="learned_train_reconstruction_not_unseen_points" if split == "train" else
                       "decoder_frozen_temporary_codes_disjoint_fit_evaluation_points_and_centers")
 
 
-def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu", test_protocol=None):
+def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu", test_protocol=None,
+                              fit_recipe_path=None):
     from networks.dmm_net import DMM
     from training.arch_training import load_training_config, ArchTrainingSystem
     output = Path(output_dir).resolve()
     require(not output.exists(), "evaluation output must be fresh")
+    require(split != 'train' or fit_recipe_path is None, 'learned train evaluation does not fit codes')
     config, dataset, centers, specs = load_training_config(config_path)
     saved = torch.load(checkpoint, map_location=device, weights_only=True)
     require(saved["arch"] == config["arch"] and saved["specs"] == specs
@@ -156,6 +178,8 @@ def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, cas
         binding["decoder_contract"] = saved["decoder_contract"]
     validate_decoder_binding(binding)
     budget = config["validation"]
+    fit_recipe = None if fit_recipe_path is None else load_fit_recipe(fit_recipe_path, config['arch'])
+    fit_recipe_sha256 = None if fit_recipe_path is None else sha256(fit_recipe_path)
     if split == "val" and case_ids is None:
         case_ids = budget["case_ids"]
     cases = evaluation_cases(dataset, split, case_ids)
@@ -168,6 +192,11 @@ def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, cas
                 and protocol.get("evaluation_budget_sha256") == budget_digest(budget)
                 and protocol.get("case_ids") == [c.metadata["case_id"] for c in cases], "test frozen protocol mismatch")
         require(case_ids is None, "final test evaluates all original test cases")
+        require(protocol.get('fit_recipe_sha256') == fit_recipe_sha256,
+                'test frozen fit recipe file mismatch')
+        if fit_recipe is not None:
+            require(protocol.get('fit_recipe_resolved_sha256') == budget_digest(fit_recipe),
+                    'test frozen resolved fit recipe mismatch')
     else:
         require(test_protocol is None, "test protocol only valid for test split")
     system = ArchTrainingSystem(DMM(specs, arch=config["arch"]), dataset, centers, config["recipe"]).to(device)
@@ -176,9 +205,12 @@ def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, cas
     write_json(output / "provenance.json", dict(split=split, checkpoint_sha256=sha256(checkpoint), training_epoch=saved["epoch"],
                training_source_sha256=saved["source_sha256"], evaluation_source_sha256=source_fingerprint(),
                config_sha256=sha256(config_path), runtime=training_runtime(device), protocol=protocol,
+               manifest_sha256=sha256(dataset.manifest_path), canonical_reference_id=dataset.canonical_reference_id,
+               training_recipe=config['recipe'], fit_recipe_sha256=fit_recipe_sha256,
+               fit_recipe=fit_recipe if fit_recipe is not None else config['recipe'] if split != 'train' else None,
                test_protocol_sha256=None if test_protocol is None else sha256(test_protocol)))
     try:
-        result = evaluate_cases(system, dataset, budget, split, case_ids, output)
+        result = evaluate_cases(system, dataset, budget, split, case_ids, output, fit_recipe=fit_recipe)
         write_json(output / "evaluation.json", result)
         return result
     except BaseException as exc:

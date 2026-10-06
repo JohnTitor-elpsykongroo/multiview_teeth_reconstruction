@@ -75,3 +75,34 @@ decoder/embedding state preservation, disjoint deterministic point partitions,
 failure accounting and retained no-surface diagnostics, and test protocol/hash
 and full-cohort binding. Existing training, resume, export and val tests remain
 required. Real dental small-case evaluation is still required before long runs.
+
+## Common code-fitting objective for controlled comparisons
+
+Default val/test fitting uses the checkpoint's training recipe. Consequently a
+training loss reduction change also changes the temporary-code inference loss.
+That comparison describes a combined training/inference recipe, and cannot
+attribute improvement solely to the trained decoder.
+
+`evaluate-cases --fit-recipe configs/autonomy/evaluation_fit_v1/upper.json`
+uses a separate, fully resolved loss recipe only for temporary val/test codes.
+The decoder and training embeddings stay frozen; the system's training recipe
+is restored even on a case failure. All step counts, Adam rate, sampling and
+geometry budgets still come from the original validation protocol. Train
+reconstruction rejects this option because it uses learned codes without fitting.
+The upper/lower `evaluation_fit_v1` files freeze the R2 baseline recipe, including
+all weights, reduction, center denominator and normal epsilon.
+
+Use the same common recipe for both baseline and controlled candidate val
+evaluations, and retain native-recipe diagnostics separately. Baseline native and
+common fits must reproduce each other before comparison. Do not overwrite native
+`best_val` evidence or retroactively relabel it as a common-objective selection.
+Compare checkpoint curves under the declared common objective when making the
+next-stage recipe/checkpoint decision. The active 4fd0d5a baseline is immutable;
+this capability requires a future merge and fresh preflight before GPU use.
+
+For test with an explicit recipe, the final frozen protocol must additionally
+bind `fit_recipe_sha256` (the exact JSON file) and `fit_recipe_resolved_sha256`
+(`budget_digest(load_fit_recipe(path, arch))`). Without an override, the fit loss
+is already bound by the selected checkpoint; a protocol that names an override
+cannot silently fall back to that default. Provenance records the training and
+fitting recipes, file SHA, manifest SHA and canonical identity separately.

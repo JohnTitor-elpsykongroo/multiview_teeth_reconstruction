@@ -1,6 +1,6 @@
 # RTX 5090 / WSL2 训练交接
 
-**更新：以 [Git 分轮训练计划](TRAINING_ITERATION_PLAN.md) 为当前执行入口。** 新机器通过本项目 Git 仓库及固定标签同步，先做 R0/R1 后反馈，暂不执行本文的 formal 示例。下文 ZIP 搬运是此前交付方式，保留用于旧包核验；Git checkout 无需 `training_package_manifest.json`，校验脚本会改为检查干净的项目 commit。DMM donor 身份由 `UPSTREAM.json` 提供，不依赖嵌套 `.git`。
+**更新：以 [Git 分轮训练计划](TRAINING_ITERATION_PLAN.md) 为当前执行入口。** 当前标签 `training-r0-v3` 使用 Python 3.10，新机器通过本项目 Git 仓库及固定标签同步，先做 R0/R1 后反馈，暂不执行本文的 formal 示例。下文 ZIP 搬运是此前交付方式，保留用于旧包核验；Git checkout 无需 `training_package_manifest.json`，校验脚本会改为检查干净的项目 commit。DMM donor 身份由 `UPSTREAM.json` 提供，不依赖嵌套 `.git`。
 
 当前交接对象：ThinkStation、RTX 5090、128GB 内存、Windows + WSL2。目标是两套独立的 10 维耦合 DMM 先验；训练期间不需要人脸、视频、相机或 nvdiffrast。
 
@@ -34,13 +34,14 @@
 
 ## 安装与目标机检查
 
-先按已有 WSL 手册配置 Ubuntu 24.04、96GB WSL 内存和 16GB swap。目标机尚未由本对话实际操作，不能将本机 RTX 5050/Windows 结果当成目标验收。
+保留已有 WSL Ubuntu，按分轮计划准备 Python 3.10；128GB 主机可配置 96GB WSL 内存和 16GB swap。目标机尚未由本对话实际操作，不能将本机 RTX 5050/Windows 结果当成目标验收。
 
 在 Ubuntu 执行：
 
 ```bash
 sudo apt update
-sudo apt install -y python3.12 python3.12-venv python3.12-dev git unzip tmux
+sudo apt install -y git unzip tmux
+# Python 3.10 解释器按分轮计划使用系统包或 Conda 准备。
 mkdir -p "$HOME/dental"
 sha256sum /mnt/e/transfer/dmm_training_source_v1.zip
 # 与 delivery.json 的 sha256 一致后解压；目标目录须为新目录。
@@ -52,7 +53,7 @@ bash scripts/setup_training_wsl.sh
 bash scripts/run_training_wsl.sh preflight
 ```
 
-安装脚本固定 PyTorch 2.13.0 / torchvision 0.28.0 / cu130，来自[官方版本组合](https://pytorch.org/get-started/previous-versions/)，辅助依赖版本在 `configs/training_handoff_v1/requirements.txt`。本机验证环境为 Torch 2.14.0+cu130，因此目标机组合必须通过实际预检；不能直接将 Windows Conda 目录或 `.pyd` 拷入 WSL。
+当前 Git 版本安装脚本固定 Python 3.10、PyTorch 2.10.0 / torchvision 0.25.0 / cu130（旧 ZIP 环境不自动升级），来自[官方版本组合](https://pytorch.org/get-started/previous-versions/)，辅助依赖版本在 `configs/training_handoff_v1/requirements.txt`。本机验证环境为 Torch 2.14.0+cu130，因此目标机组合必须通过实际预检；不能直接将 Windows Conda 目录或 `.pyd` 拷入 WSL。
 
 预检执行源码包哈希校验、完整数据资源校验、CUDA 前后向、训练单元测试、上下颌真实病例 20 步小采样优化，以及**按配置实际 256 点/组件 + 2048 非表面点运行 2 步**的显存/有限值检查。只在全部通过后输出 `TARGET_READY_FOR_BOUNDED_PILOT`。它不需要编译可微渲染器，也不会启动正式长训。
 

@@ -1,12 +1,12 @@
 # Git 协作与分轮训练计划
 
-本项目第一阶段：已知相机、静态上下颌、逐牙语义掩码驱动的合成重建。先训练上下颌各一套 10 维耦合 DMM 先验，再验证多视图拟合。训练先验使用已处理的三维数据；本轮不训练照片分割器。目标机：RTX 5090 / 128GB / Windows + WSL2 Ubuntu 24.04。
+本项目第一阶段：已知相机、静态上下颌、逐牙语义掩码驱动的合成重建。先训练上下颌各一套 10 维耦合 DMM 先验，再验证多视图拟合。训练先验使用已处理的三维数据；本轮不训练照片分割器。目标机：RTX 5090 / 128GB / Windows + WSL2 Ubuntu，Python 3.10（系统解释器或 Linux Conda 均可）。
 
 **当前只安排 R0、R1。R1 完成后交回反馈，停止继续长训。** 后续轮次由结果决定修改，提交新代码和配置，再在目标机更新。源码和接口已具备启动小规模验证的入口，模型质量与目标机环境尚待实际验证。
 
 ## 仓库边界
 
-本地仓库根目录为 `D:\WorkSpace\Dental\multiview_teeth_reconstruction`，主分支 `main`，远程为 [JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。本次部署标签为 `training-r0-v2`：相对初始 `training-r0-v1` 仅完善远程地址与部署文档，训练源码和配置不变，旧标签保留。不要使用官方 DMM 仓库替换本项目。
+本地仓库根目录为 `D:\WorkSpace\Dental\multiview_teeth_reconstruction`，主分支 `main`，远程为 [JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。本次部署标签为 `training-r0-v3`：改用 Python 3.10 及兼容的依赖，DMM 模型源码、损失和训练 JSON 配置不变，旧标签保留。环境改变后必须重新运行 R0，不能复用旧预检或跨环境续训。不要使用官方 DMM 仓库替换本项目。
 
 - 纳入：DMM 修改源码、内置 torchmeta、nvdiffrast 源码及 SM12 修复、项目脚本、配置、接口、测试、研究和部署文档。
 - 不纳入：数据、权重、运行输出、Python/CUDA 环境、编译产物、访问凭据。`runs/` 和 `.venv/` 是本地输出。
@@ -16,7 +16,7 @@
 
 ## 目标机首次部署
 
-如果尚未安装 WSL，在 Windows 管理员 PowerShell 执行以下命令，按提示重启并完成 Ubuntu 用户创建。已有 Ubuntu 24.04 则只需更新并确认版本，不重复安装。
+如果尚未安装 WSL，在 Windows 管理员 PowerShell 执行以下命令，按提示重启并完成 Ubuntu 用户创建。已有 Ubuntu 22.04/24.04 不必重新安装；当前只需要可用的 Linux Python 3.10。
 
 ```powershell
 wsl --update
@@ -34,15 +34,15 @@ swap=16GB
 
 参考：[Microsoft WSL 安装说明](https://learn.microsoft.com/en-us/windows/wsl/install)、[WSL 配置说明](https://learn.microsoft.com/en-us/windows/wsl/wsl-config)、[NVIDIA WSL CUDA 说明](https://docs.nvidia.com/cuda/wsl-user-guide/)。
 
-以下命令全部在 Ubuntu 终端执行。训练代码和数据放 WSL Linux ext4 文件系统，不直接在 `/mnt/d` 上长训。
+以下命令全部在 Ubuntu 终端执行。`$HOME/dental` 是新部署示例；已放在 `/mnt/e/实际目录/dental` 的项目可以保留当前位置，只需进入对应项目目录，代码与 data 维持同级关系。已有 checkout 跳过 clone，按下面“已有项目更新”操作。
 
 ```bash
 sudo apt update
-sudo apt install -y python3.12 python3.12-venv python3.12-dev git tmux rsync
+sudo apt install -y git tmux rsync
 mkdir -p "$HOME/dental"
 git clone https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction.git "$HOME/dental/multiview_teeth_reconstruction"
 cd "$HOME/dental/multiview_teeth_reconstruction"
-git switch --detach training-r0-v2
+git switch --detach training-r0-v3
 git status --short                 # 应无输出
 git rev-parse HEAD                 # 记录到实验笔记
 ```
@@ -69,7 +69,41 @@ rsync -a --info=progress2 "$TRANSFER/Teeth3DS_DualArch_v1" "$HOME/dental/data/"
 rsync -a --info=progress2 "$TRANSFER/Teeth3DS" "$HOME/dental/data/"
 ```
 
-确认数据复制完成、`nvidia-smi` 能看到 RTX 5090 后再安装环境。脚本建立项目 `.venv`，固定 Python 3.12、PyTorch 2.13.0 / torchvision 0.28.0 / cu130 以及 requirements 中的依赖；版本组合见 [PyTorch 官方安装表](https://pytorch.org/get-started/previous-versions/)。现阶段使用预编译 PyTorch，无需先装 CUDA Toolkit 或编译渲染器。已有 `.venv` 时脚本会拒绝覆盖，避免破坏环境；安装失败先保留报错再处理。
+确认数据复制完成、`nvidia-smi` 能看到 RTX 5090 后再安装环境。脚本建立项目 `.venv`，固定 Python 3.10、PyTorch 2.10.0 / torchvision 0.25.0 / cu130 以及 requirements 中的依赖；版本组合见 [PyTorch 官方安装表](https://pytorch.org/get-started/previous-versions/)。现阶段使用预编译 PyTorch，无需先装 CUDA Toolkit 或编译渲染器。已有 `.venv` 时脚本会拒绝覆盖，避免破坏环境；安装失败先保留报错再处理。
+
+先准备 Python 3.10，以下两种方法选其一。如果当前系统或已激活 Conda 的 Python 已是 3.10，可直接运行安装脚本，无需另建 bootstrap 环境。
+
+- Ubuntu 22.04 系统解释器：`sudo apt install -y python3.10 python3.10-venv`。
+- 已安装 Linux Conda（适用于当前截图中的 base 环境）：
+
+```bash
+conda create -n dental-bootstrap310 python=3.10 pip -y
+conda activate dental-bootstrap310
+python --version
+```
+
+Conda 环境仅提供解释器，训练依赖由脚本装到项目 `.venv`，不污染 base；保留 bootstrap 环境，因为 `.venv` 依赖它的基础解释器。脚本依次检测 `python3.10`、`python3`、`python`，必须是 Linux 3.10；也可用 `PYTHON_BIN="$(command -v python)" bash scripts/setup_training_wsl.sh` 显式指定。找不到 3.10 或缺少 venv/ensurepip 时会在创建环境前明确报错。依赖固定为 NumPy 2.2.6、SciPy 1.15.3、scikit-image 0.25.2、Pillow 11.3.0、ordered-set 4.1.0，pip 固定 25.3。参考：[Conda 环境管理](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html)、[Ubuntu 22.04 venv 包](https://packages.ubuntu.com/jammy/python3.10-venv)。
+
+已有项目更新（先结束所有训练；在实际项目根目录执行）：
+
+```bash
+git fetch origin --tags
+git switch --detach training-r0-v3
+```
+
+此前 `python3.12: command not found` 发生在创建 `.venv` 前，通常没有残留环境。若后来已创建旧 `.venv`，先退出激活状态，保留旧环境备份再安装，不删除历史产物：
+
+```bash
+# 仅在 .venv 已存在时执行；移动前确保已 deactivate 且没有训练进程。
+if [ -e .venv ]; then
+  mkdir -p runs/environment_backups
+  mv -- .venv "runs/environment_backups/venv_before_py310_$(date -u +%Y%m%dT%H%M%SZ)_$$"
+fi
+```
+
+备份仅供恢复/排错，虚拟环境移动后不可直接作为新路径下的可运行环境。安装完成后，后续训练入口会自动激活项目 `.venv`。
+
+本次兼容性验证：在全新 Windows Python 3.10.21 隔离环境安装同版 CPU PyTorch 和上述科学计算依赖，`pip check` 通过，26 项训练与交接回归测试全部通过、无跳过；另成功解析官方 Python 3.10 / Linux cu130 的 torch、torchvision wheel 及科学计算依赖。该证据不替代目标 RTX 5090 / WSL 的 R0 实测，也不代表模型训练质量通过。
 
 ```bash
 nvidia-smi
@@ -99,7 +133,7 @@ R2 以后为计划，不是本轮已经发放的执行指令。R2 小病例实�
 把 PROOF 改成 R0 成功报告实际路径。每一步失败后先停止并反馈；建议逐条执行，以便检查退出状态。
 
 ```bash
-cd "$HOME/dental/multiview_teeth_reconstruction"
+# 先进入实际项目根目录（包括 /mnt/e 上的项目也一样）
 PROOF=runs/target_preflight_实际时间戳/report.json
 bash scripts/run_training_wsl.sh smoke upper "$PROOF"
 bash scripts/run_training_wsl.sh smoke lower "$PROOF"

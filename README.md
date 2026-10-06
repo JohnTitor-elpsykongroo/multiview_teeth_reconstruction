@@ -2,7 +2,7 @@
 
 **Git 训练协作入口：[分轮训练、目标机克隆与反馈计划](docs/TRAINING_ITERATION_PLAN.md)。** 项目根目录现作为独立仓库，DMM 和 nvdiffrast 修改源码直接纳入版本管理。数据、权重和环境另行迁移。当前只执行 R0 预检与 R1 短程 pilot，反馈后再修改、更新和继续训练。仓库内 [主设计文档](docs/multiview_teeth_reconstruction_semanticxy.md) 随代码同步。
 
-远程仓库：[JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。新机器部署使用 `training-r0-v2` 标签（相对 v1 仅补齐部署文档，训练源码和配置相同）。
+远程仓库：[JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。新机器部署使用 `training-r0-v3` 标签（Python 3.10 / PyTorch 2.10.0 / cu130，DMM 源码和训练 JSON 配置不变；重新执行预检）。
 
 RTX 5090 / WSL2 训练交接：[交接入口与修复证据](docs/TRAINING_HANDOFF_20261006.md)。新配置在 `configs/training_handoff_v1/`，使用非零参考初始化与稳定法线分母；脚本提供包校验、目标 GPU 预检、smoke、pilot、显式长训入口。正式几何质量尚待 pilot/训练验证。
 

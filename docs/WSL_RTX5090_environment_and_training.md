@@ -1,5 +1,7 @@
 # ThinkStation / RTX 5090 / 128GB：WSL2 环境配置与 DMM 训练手册
 
+**2026-10-06 Python 3.10 更新：当前执行以 [分轮训练计划](TRAINING_ITERATION_PLAN.md) 和 `training-r0-v3` 为准，使用 PyTorch 2.10.0 / cu130；以下旧 Python 3.12 手工环境命令不再用于本轮安装。**
+
 更新：2026-10-05。适用当前项目 `third_party/DMM` 的 **manifest 独立单颌训练入口**，及可选双颌训练调度、已知相机联合拟合。
 
 2026-10-06 交接更新：新机器请优先使用 [训练交接入口](TRAINING_HANDOFF_20261006.md) 和 `configs/training_handoff_v1/`。它包含本次修复后的非零 SIREN 参考初始化、稳定法线分母、版本化验证及可执行 WSL 脚本。下文保留通用环境和旧手工命令供排错；不要用旧默认 specs 重新生成配置替代交接配置。

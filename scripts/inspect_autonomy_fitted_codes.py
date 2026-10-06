@@ -82,6 +82,10 @@ def inspect(checkpoint,evaluation,probe_config=None):
                     code = np.asarray(arrays[f'code_{label}'],dtype=np.float64)
                     if code.shape!=mu.shape or not np.isfinite(code).all():
                         raise ValueError('invalid code dimension/numeric')
+                    if result['split']=='train':
+                        learned=saved['system_state'][f'latents.{label}.weight'][eligible[case['case_id']]['embedding_row']].detach().cpu().numpy().astype(np.float64)
+                        if not np.array_equal(code,learned):
+                            raise ValueError('saved train code differs from its checkpoint learned row')
                     q = np.linalg.solve(factor,code-mu)
                     if not np.isfinite(q).all(): raise ValueError('nonfinite standardized code')
                     record['components'][str(label)] = dict(original_present_trained_count=len(support),support_case_ids=support,

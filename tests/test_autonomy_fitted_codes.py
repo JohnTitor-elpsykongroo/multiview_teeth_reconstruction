@@ -92,5 +92,24 @@ class FittedCodeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'support'): export_statistics([[1.,2.],[3.,4.]])
         with self.assertRaisesRegex(ValueError,'zero'): export_statistics([[1.,2.]]*3)
 
+    def test_train_codes_must_equal_their_exact_learned_row(self):
+        folder,checkpoint,saved=self.fixture()
+        provenance=json.loads((folder/'provenance.json').read_text());provenance['split']='train'
+        (folder/'provenance.json').write_text(json.dumps(provenance))
+        evaluation=json.loads((folder/'evaluation.json').read_text());evaluation['split']='train'
+        evaluation['cases'][0].update(case_id='a',split='train',code_mode='learned_train')
+        (folder/'evaluation.json').write_text(json.dumps(evaluation))
+        artifact=folder/'case_0000'
+        def archive(row):
+            np.savez(artifact/'codes.npz',model_unit_mm=50,code_0=saved['system_state']['latents.0.weight'][0].numpy(),
+                     code_11=saved['system_state']['latents.11.weight'][row].numpy())
+            (artifact/'field.json').write_text(json.dumps(dict(codes_sha256=sha(artifact/'codes.npz'))))
+        archive(0)
+        self.assertEqual(inspect(checkpoint,folder)['failed'],0)
+        archive(2)
+        result=inspect(checkpoint,folder)
+        self.assertEqual(result['failed'],1)
+        self.assertIn('checkpoint learned row',result['cases'][0]['error'])
+
 
 if __name__=='__main__': unittest.main()

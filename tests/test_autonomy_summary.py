@@ -31,6 +31,15 @@ class SummaryTests(unittest.TestCase):
 
     def tearDown(self): self.tmp.cleanup()
 
+    def test_nested_batch_checkpoints_keep_distinct_evaluation_names(self):
+        import shutil
+        for name in ('baseline_common','candidate_common'):
+            destination=self.root/'run'/name/'checkpoint_0000'
+            shutil.copytree(self.folder,destination)
+        result=summarize(self.root/'run',self.root/'summary')
+        self.assertEqual({item['evaluation'] for item in result['evaluations']},
+            {'upper_val','baseline_common/checkpoint_0000','candidate_common/checkpoint_0000'})
+
     def test_preserves_failed_cohort_and_component_diagnostics(self):
         result = summarize(self.root/'run', self.root/'summary')
         self.assertIsNone(result['evaluations'][0]['score_mm'])

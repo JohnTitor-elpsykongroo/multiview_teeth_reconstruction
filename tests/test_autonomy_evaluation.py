@@ -13,7 +13,7 @@ from data.arch_dataset import TrainingCase
 from dmm.validation import ContractError, read_json, write_json, reference, sha256
 from networks.dmm_net import DMM
 from training.arch_training import ArchTrainingSystem, load_training_config, train_arch
-from training.evaluation import evaluation_cases, evaluate_cases, evaluate_checkpoint_cases, budget_digest, load_fit_recipe
+from training.evaluation import evaluation_cases, evaluate_cases, evaluate_checkpoint_cases, evaluate_checkpoint_batch, budget_digest, load_fit_recipe
 from training.validation import validation_samples, mesh_metrics
 
 torch.set_num_threads(1)
@@ -187,6 +187,63 @@ class EvaluationTests(unittest.TestCase):
         for result in (native, common):
             for case in result['cases']: case.pop('seconds')
         self.assertEqual(native, common)
+
+    def batch_checkpoints(self):
+        import shutil
+        with patch('training.validation.mesh_metrics', return_value=dict(score_mm=1.)):
+            train_arch(self.path,self.root/'training')
+        first=self.root/'training/final.pth'
+        second=self.root/'checkpoint_copy.pth'
+        shutil.copyfile(first,second)
+        return [first,second]
+
+    def test_batch_reuses_validation_but_reconstructs_each_checkpoint_exactly(self):
+        checkpoints=self.batch_checkpoints()
+        hashes=[sha256(path) for path in checkpoints]
+        fit_path=self.root/'fit.json'
+        write_json(fit_path,dict(schema='dmm_latent_fit_recipe_v1',arch='upper',recipe=self.config['recipe']))
+        with patch('training.evaluation.mesh_metrics', return_value=dict(score_mm=2.)):
+            expected=evaluate_checkpoint_cases(self.path,checkpoints[0],self.root/'single',split='val',fit_recipe_path=fit_path)
+            with patch('training.arch_training.load_training_config',wraps=load_training_config) as loader:
+                batch=evaluate_checkpoint_batch(self.path,checkpoints,self.root/'batch',split='val',fit_recipe_path=fit_path)
+                self.assertEqual(loader.call_count,1)
+        self.assertEqual(batch['status'],'EVALUATION_BATCH_COMPLETED_NOT_QUALITY_ACCEPTED')
+        for item in batch['completed']:
+            actual=read_json(self.root/'batch'/item['directory']/'evaluation.json')
+            for result in (actual,expected):
+                for case in result['cases']: case.pop('seconds',None)
+            self.assertEqual(actual,expected)
+        self.assertEqual(hashes,[sha256(path) for path in checkpoints])
+
+    def test_batch_geometry_failures_are_retained_for_each_checkpoint(self):
+        checkpoints=self.batch_checkpoints()
+        with patch('training.evaluation.mesh_metrics',side_effect=ContractError('controlled geometry failure')):
+            batch=evaluate_checkpoint_batch(self.path,checkpoints,self.root/'batch',split='val')
+        self.assertEqual(len(batch['completed']),2)
+        self.assertTrue(all(item['failed_case_count']==1 and item['score_mm'] is None for item in batch['completed']))
+
+    def test_batch_rejects_config_drift_and_preserves_first_result(self):
+        from training import evaluation
+        checkpoints=self.batch_checkpoints()
+        original=evaluation._evaluate_checkpoint_cases_loaded
+        def mutate_after_first(*args,**kwargs):
+            result=original(*args,**kwargs)
+            self.path.write_text(self.path.read_text()+'\n')
+            return result
+        with patch('training.evaluation.mesh_metrics',return_value=dict(score_mm=2.)), \
+             patch('training.evaluation._evaluate_checkpoint_cases_loaded',side_effect=mutate_after_first):
+            with self.assertRaisesRegex(ContractError,'config/source drift'):
+                evaluate_checkpoint_batch(self.path,checkpoints,self.root/'batch',split='val')
+        batch=read_json(self.root/'batch/batch.json')
+        self.assertEqual(batch['status'],'EVALUATION_BATCH_PROCESS_FAILED')
+        self.assertEqual(len(batch['completed']),1)
+        self.assertTrue((self.root/'batch/checkpoint_0000/evaluation.json').is_file())
+
+    def test_batch_excludes_test_before_loading_any_inputs(self):
+        with patch('training.arch_training.load_training_config') as loader:
+            with self.assertRaisesRegex(ContractError,'excludes test'):
+                evaluate_checkpoint_batch(self.path,['missing.pth'],self.root/'batch',split='test')
+            loader.assert_not_called()
 
 
 if __name__ == '__main__':

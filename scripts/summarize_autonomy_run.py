@@ -126,18 +126,19 @@ def summarize(run, output):
     cases, teeth, curves, evaluations, inputs = [], [], [], [], {}
     failure_counts = {}
     # Only completed evaluations; an active writer's partial records are not silently scored.
-    for path in sorted(run.glob('*/evaluation.json')):
+    for path in sorted(run.rglob('evaluation.json')):
         result, provenance = checked_evaluation(path.parent)
+        evaluation_name = path.parent.relative_to(run).as_posix()
         inputs[str(path)] = sha(path)
         inputs[str(path.parent/'provenance.json')] = sha(path.parent/'provenance.json')
-        evaluations.append(dict(evaluation=path.parent.name, split=result['split'],
+        evaluations.append(dict(evaluation=evaluation_name, split=result['split'],
             requested=result['requested_case_count'], successful=result['successful_case_count'],
             failed=result['failed_case_count'], score_mm=result['score_mm'],
             training_epoch=provenance['training_epoch'], checkpoint_sha256=provenance['checkpoint_sha256'],
             config_sha256=provenance['config_sha256'], budget=result['budget']))
         for record in result['cases']:
             geometry = record.get('geometry', {})
-            prefix = dict(evaluation=path.parent.name, split=result['split'], case_id=record['case_id'],
+            prefix = dict(evaluation=evaluation_name, split=result['split'], case_id=record['case_id'],
                 patient_id=record['patient_id'], status=record['status'],
                 checkpoint_sha256=provenance['checkpoint_sha256'])
             family = error_family(record.get('error', '')) if record['status'] == 'FAILED' else ''

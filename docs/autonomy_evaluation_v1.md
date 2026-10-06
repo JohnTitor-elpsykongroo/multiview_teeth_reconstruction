@@ -106,3 +106,22 @@ bind `fit_recipe_sha256` (the exact JSON file) and `fit_recipe_resolved_sha256`
 is already bound by the selected checkpoint; a protocol that names an override
 cannot silently fall back to that default. Provenance records the training and
 fitting recipes, file SHA, manifest SHA and canonical identity separately.
+
+## Bounded checkpoint batches
+
+`evaluate-cases-batch --checkpoint PATH ...` evaluates independent checkpoints of
+one frozen train/val config and common fitting recipe. It fully validates the
+dataset once per batch, then rebuilds the model, embedding table and temporary
+codes separately for each checkpoint. Every evaluated case still rehashes its NPZ.
+Config/source/fit-recipe/checkpoint hashes and manifest/canonical/spec references
+are checked for drift; per-checkpoint provenance and partial failures are retained
+under `checkpoint_0000`, etc., with a `batch.json` ledger. Geometry failures preserve
+null cohort scores. Process/integrity failures stop the batch with completed results
+retained. Test is excluded from this research batching command.
+
+Repeated full manifest validation took about six minutes per individual R2
+evaluation, while four coarse val cases took about 77 seconds. Batching the four
+matching epochs avoids repeating that full validation four times for immutable
+inputs; it does not remove case hashing, increase fit/grid budgets or reuse fitted
+codes. Synthetic regression must match individual evaluation exactly except wall
+time, and the next GPU run must pass a real small batch/individual parity gate.

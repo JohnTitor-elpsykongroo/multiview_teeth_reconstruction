@@ -161,12 +161,18 @@ def evaluate_cases(system, dataset, config, split, case_ids=None, artifact_root=
 
 def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu", test_protocol=None,
                               fit_recipe_path=None):
+    return _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, split=split, case_ids=case_ids,
+                device=device, test_protocol=test_protocol, fit_recipe_path=fit_recipe_path)
+
+
+def _evaluate_checkpoint_cases_loaded(config_path, checkpoint, output_dir, *, split, case_ids=None, device="cpu",
+                                     test_protocol=None, fit_recipe_path=None, loaded=None):
     from networks.dmm_net import DMM
     from training.arch_training import load_training_config, ArchTrainingSystem
     output = Path(output_dir).resolve()
     require(not output.exists(), "evaluation output must be fresh")
     require(split != 'train' or fit_recipe_path is None, 'learned train evaluation does not fit codes')
-    config, dataset, centers, specs = load_training_config(config_path)
+    config, dataset, centers, specs = load_training_config(config_path) if loaded is None else loaded
     saved = torch.load(checkpoint, map_location=device, weights_only=True)
     require(saved["arch"] == config["arch"] and saved["specs"] == specs
             and saved["manifest_sha256"] == sha256(dataset.manifest_path), "checkpoint/data/spec mismatch")
@@ -215,4 +221,54 @@ def evaluate_checkpoint_cases(config_path, checkpoint, output_dir, *, split, cas
         return result
     except BaseException as exc:
         write_json(output / "failure.json", dict(error=str(exc), split=split))
+        raise
+
+
+def evaluate_checkpoint_batch(config_path, checkpoints, output_dir, *, split, case_ids=None, device='cpu', fit_recipe_path=None):
+    """Validate one frozen config/dataset once, then evaluate checkpoints in isolation.
+
+    Each model/embedding table and temporary codes are reconstructed independently;
+    validation_samples still verifies actual NPZ SHA on every case. Test is excluded.
+    """
+    from training.arch_training import load_training_config
+    from dmm.validation import resolve_ref
+    require(split in ('train','val'), 'checkpoint batch excludes test')
+    require(split != 'train' or fit_recipe_path is None, 'learned train evaluation does not fit codes')
+    paths = [Path(path).resolve() for path in checkpoints]
+    require(bool(paths) and len(set(paths)) == len(paths), 'batch needs unique checkpoint paths')
+    output = Path(output_dir).resolve()
+    require(not output.exists(), 'batch output must be fresh')
+    config_path = Path(config_path).resolve()
+    config_sha = sha256(config_path)
+    source_sha = source_fingerprint()
+    fit_sha = None if fit_recipe_path is None else sha256(fit_recipe_path)
+    checkpoint_sha = [sha256(path) for path in paths]
+    loaded = load_training_config(config_path)
+    output.mkdir(parents=True, exist_ok=False)
+    batch = dict(schema='dmm_checkpoint_evaluation_batch_v1', split=split, status='EVALUATION_BATCH_RUNNING',
+                 config_sha256=config_sha, evaluation_source_sha256=source_sha, fit_recipe_sha256=fit_sha,
+                 completed=[], runtime=training_runtime(device),
+                 scope='one full dataset validation; each case NPZ rehashed; each checkpoint independently reconstructed')
+    write_json(output/'batch.json', batch)
+    try:
+        for index,path in enumerate(paths):
+            require(sha256(config_path) == config_sha and source_fingerprint() == source_sha, 'batch config/source drift')
+            require((None if fit_recipe_path is None else sha256(fit_recipe_path)) == fit_sha, 'batch fit recipe drift')
+            require(sha256(path) == checkpoint_sha[index], 'batch checkpoint drift')
+            for key in ('manifest','canonical_reference','specs'):
+                resolve_ref(config_path, loaded[0][key])
+            folder = output / f'checkpoint_{index:04d}'
+            result = _evaluate_checkpoint_cases_loaded(config_path, path, folder, split=split, case_ids=case_ids,
+                          device=device, fit_recipe_path=fit_recipe_path, loaded=loaded)
+            provenance = read_json(folder/'provenance.json')
+            batch['completed'].append(dict(checkpoint=str(path), checkpoint_sha256=checkpoint_sha[index],
+                epoch=provenance['training_epoch'], directory=folder.name, status=result['status'],
+                failed_case_count=result['failed_case_count'], score_mm=result['score_mm']))
+            write_json(output/'batch.json', batch)
+        batch['status'] = 'EVALUATION_BATCH_COMPLETED_NOT_QUALITY_ACCEPTED'
+        write_json(output/'batch.json', batch)
+        return batch
+    except BaseException as exc:
+        batch.update(status='EVALUATION_BATCH_PROCESS_FAILED', error=str(exc))
+        write_json(output/'batch.json', batch)
         raise

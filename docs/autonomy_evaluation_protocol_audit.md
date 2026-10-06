@@ -37,6 +37,16 @@ objectives. Small empirical code variance or small fixed-point response alone
 does not demonstrate functional collapse. No representation or bundle contract
 change is proposed by this audit.
 
+`scripts/inspect_autonomy_fitted_codes.py` reports saved train/val codes in the
+float64 statistical-array coordinates used by bundle export, with the same
+shrinkage and floor, original/present/trained support only, and exact checkpoint/
+field/code SHA binding. Its statistic arrays are regression-checked against actual
+`export_bundle` output. Bundle runtime converts those arrays to float32. Gum q is
+reported as a hypothetical sensitivity coordinate because deployment gum remains
+fixed; a large or small q alone is not a geometry acceptance criterion. The tool
+rejects test before checkpoint/metric access, preserves missing-code cases as
+telemetry failures, and never reconstructs old missing val codes from train rows.
+
 ## Diagnostic sequence after the active control
 
 First inspect every matched-epoch common comparison, native failures, tooth mean

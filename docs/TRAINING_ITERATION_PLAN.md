@@ -6,7 +6,7 @@
 
 ## 仓库边界
 
-本地仓库根目录为 `D:\WorkSpace\Dental\multiview_teeth_reconstruction`，主分支 `main`，初始训练版本标签 `training-r0-v1`。当前不设置远程。提供远程地址后再配置 origin 和推送；不要使用官方 DMM 仓库替换本项目。
+本地仓库根目录为 `D:\WorkSpace\Dental\multiview_teeth_reconstruction`，主分支 `main`，远程为 [JohnTitor-elpsykongroo/multiview_teeth_reconstruction](https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction)。本次部署标签为 `training-r0-v2`：相对初始 `training-r0-v1` 仅完善远程地址与部署文档，训练源码和配置不变，旧标签保留。不要使用官方 DMM 仓库替换本项目。
 
 - 纳入：DMM 修改源码、内置 torchmeta、nvdiffrast 源码及 SM12 修复、项目脚本、配置、接口、测试、研究和部署文档。
 - 不纳入：数据、权重、运行输出、Python/CUDA 环境、编译产物、访问凭据。`runs/` 和 `.venv/` 是本地输出。
@@ -16,15 +16,33 @@
 
 ## 目标机首次部署
 
-远程就绪后，替换下列地址占位符。训练代码和数据放 WSL Linux ext4 文件系统，不直接在 `/mnt/d` 上长训。
+如果尚未安装 WSL，在 Windows 管理员 PowerShell 执行以下命令，按提示重启并完成 Ubuntu 用户创建。已有 Ubuntu 24.04 则只需更新并确认版本，不重复安装。
+
+```powershell
+wsl --update
+wsl --install -d Ubuntu-24.04
+wsl --list --verbose
+```
+
+确认 Ubuntu 使用 WSL 2；若列表显示版本 1，执行 `wsl --set-version Ubuntu-24.04 2`。在 Windows 安装支持 RTX 5090 的 NVIDIA 驱动。128GB 主机可在 Windows 用户目录的 `.wslconfig` 中合并以下配置，保留已有其他设置；执行 `wsl --shutdown` 后重新打开 Ubuntu 生效，注意该命令会停止所有 WSL 任务。
+
+```ini
+[wsl2]
+memory=96GB
+swap=16GB
+```
+
+参考：[Microsoft WSL 安装说明](https://learn.microsoft.com/en-us/windows/wsl/install)、[WSL 配置说明](https://learn.microsoft.com/en-us/windows/wsl/wsl-config)、[NVIDIA WSL CUDA 说明](https://docs.nvidia.com/cuda/wsl-user-guide/)。
+
+以下命令全部在 Ubuntu 终端执行。训练代码和数据放 WSL Linux ext4 文件系统，不直接在 `/mnt/d` 上长训。
 
 ```bash
 sudo apt update
-sudo apt install -y python3.12 python3.12-venv python3.12-dev git tmux
+sudo apt install -y python3.12 python3.12-venv python3.12-dev git tmux rsync
 mkdir -p "$HOME/dental"
-git clone <稍后提供的远程地址> "$HOME/dental/multiview_teeth_reconstruction"
+git clone https://github.com/JohnTitor-elpsykongroo/multiview_teeth_reconstruction.git "$HOME/dental/multiview_teeth_reconstruction"
 cd "$HOME/dental/multiview_teeth_reconstruction"
-git switch --detach training-r0-v1
+git switch --detach training-r0-v2
 git status --short                 # 应无输出
 git rev-parse HEAD                 # 记录到实验笔记
 ```
@@ -40,6 +58,18 @@ git rev-parse HEAD                 # 记录到实验笔记
 ```
 
 训练清单还引用原始 Teeth3DS OBJ/JSON，不能只复制处理后样本。既有移交资源清单统计约 75.3 GB；完整复制数据目录可能更大，另外为环境、检查点和后续实验预留空间。冻结数据不通过 Git 搬运，不修改其中的 manifest 或资源哈希。首次预检由加载器完整检查哈希与患者划分。
+
+例如，已把这两个目录搬到目标电脑 Windows 的 `D:\WorkSpace\Dental\data` 时，可以在 Ubuntu 执行下面的复制命令。若中转盘位置不同，只修改 `TRANSFER`，不要修改训练配置中的相对路径。
+
+```bash
+TRANSFER=/mnt/d/WorkSpace/Dental/data
+test -d "$TRANSFER/Teeth3DS_DualArch_v1" && test -d "$TRANSFER/Teeth3DS"
+mkdir -p "$HOME/dental/data"
+rsync -a --info=progress2 "$TRANSFER/Teeth3DS_DualArch_v1" "$HOME/dental/data/"
+rsync -a --info=progress2 "$TRANSFER/Teeth3DS" "$HOME/dental/data/"
+```
+
+确认数据复制完成、`nvidia-smi` 能看到 RTX 5090 后再安装环境。脚本建立项目 `.venv`，固定 Python 3.12、PyTorch 2.13.0 / torchvision 0.28.0 / cu130 以及 requirements 中的依赖；版本组合见 [PyTorch 官方安装表](https://pytorch.org/get-started/previous-versions/)。现阶段使用预编译 PyTorch，无需先装 CUDA Toolkit 或编译渲染器。已有 `.venv` 时脚本会拒绝覆盖，避免破坏环境；安装失败先保留报错再处理。
 
 ```bash
 nvidia-smi

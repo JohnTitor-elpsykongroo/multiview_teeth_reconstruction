@@ -8,6 +8,20 @@ from dmm.validation import reference, require, stamped, write_json
 def main():
     parser = argparse.ArgumentParser(description="Dual-arch DMM interfaces (v1)")
     commands = parser.add_subparsers(dest="command", required=True)
+    latest_validate = commands.add_parser('validate-latest', help='read current fixed-similarity NPZ/PKL manifests; no 50mm conversion')
+    latest_validate.add_argument('--config', required=True)
+    latest_validate.add_argument('--verify-arrays', action='store_true', help='authenticate and check every selected NPZ/PKL, sequentially')
+    latest_validate.add_argument('--cohort', choices=['computational_pass','all_exported'])
+    latest_train = commands.add_parser('train-latest', help='train fixed-similarity exports with existing DMM.forward losses')
+    latest_train.add_argument('--config', required=True)
+    latest_train.add_argument('--output', required=True)
+    latest_train.add_argument('--device', default='cuda')
+    latest_train.add_argument('--resume')
+    latest_train.add_argument('--max-steps', type=int, help='bounded real optimizer check; does not imply a complete epoch')
+    latest_train.add_argument('--epochs', type=int)
+    latest_train.add_argument('--case-id', action='append', help='explicit train-only smoke subset; include mirror parents')
+    latest_train.add_argument('--samples-per-scene', type=int)
+    latest_train.add_argument('--cohort', choices=['computational_pass','all_exported'], help='explicitly include REVIEW with all_exported; no exclusion policy is changed')
     create = commands.add_parser("make-config", help="create a hashed, independent single-arch training config")
     create.add_argument("--arch", choices=["upper", "lower"], required=True)
     create.add_argument("--manifest", required=True)
@@ -94,7 +108,13 @@ def main():
     fit.add_argument('--collision-config', help='optional penetration proxy; disabled when omitted')
     fit.add_argument('--initialize-mean', action='store_true', help='rank independent mean-model pose proposals; incompatible with resume')
     args = parser.parse_args()
-    if args.command == "make-config":
+    if args.command == 'validate-latest':
+        from training.fixed_similarity import validate_latest
+        result = validate_latest(args.config, args.verify_arrays, args.cohort)
+    elif args.command == 'train-latest':
+        from training.fixed_similarity import train_latest
+        result = train_latest(args.config, args.output, args.device, args.resume, args.max_steps, args.epochs, args.case_id, args.samples_per_scene, args.cohort)
+    elif args.command == "make-config":
         path = Path(args.output).resolve()
         require(not path.exists(), "config already exists")
         config = stamped("arch_training_config", arch=args.arch, manifest=reference(args.manifest, path),

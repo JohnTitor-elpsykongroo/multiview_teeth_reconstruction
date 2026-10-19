@@ -1,0 +1,43 @@
+{
+  "schema": "portable_teeth3ds_package/1",
+  "files": {
+    ".gitignore": "917746fc9facfe33926a1701f89a4e7bc9b47fb9c926923b34973c6758089997",
+    "AGENTS.md": "c5536f6d1654f67ff31db6a3e6928b243a1ff28ac2f0a015ed20283f0bcb88b0",
+    "assets/baseline_cases.json": "99500662d840839f64a80e6f578af5cbfee754c28063d6223a681e1f675edb0f",
+    "assets/candidates.json": "7939cdf32658f000fb85c3437fde6f094e160fe56ba4f342293378bb24fdd6c1",
+    "assets/configs/lower_specs.json": "df3401570ba23e4be90decf516b0bcec71798848a868adbdfdf44c147a628394",
+    "assets/configs/upper_specs.json": "ce655fe61b8b2dda00ad9c9b080c5ff97f18cedbf7aac39acb2b290890ff6e5d",
+    "assets/exclusions.json": "e172adc3c9b89ef8a146d1c06a75bed32f191922012849ca17c4b108c65141f2",
+    "assets/provenance.json": "89b72abc9f2ce78fcc88906bb489a3f9c2bcc30bfa22f52bf5295e0f034cbb41",
+    "assets/recipe.json": "ef712b77cbc438f5b0a74283b5ff32b3d36eb3b82a36ede5f2f39c79dd03720b",
+    "assets/references.json": "5919e70b7216f55a150f01abcb62fde02637476bed0f618cfb997b56801aefbe",
+    "assets/sample_arrays.json": "4607576fc122edf33e20ec1a4499c7984ba56a068805287b3b586fbf5471f25e",
+    "assets/tables.json": "520724b8452e1e15ba13beffd2c686dc19560665e0595eb1623074caa6df2120",
+    "geometry_verify.py": "bb94618447826e808c4aecdf8701dea864eb28472ea5e6568bd45415ddee5c95",
+    "pipeline.py": "0c615a1014c4d3a70e83df80d0d72d99614a4c389703a1c0c73f4152192125a9",
+    "README.md": "305cb62bb38d79d3103236e5a19640e8d7360b2c5ae726182916c5e81842d182",
+    "reproduction.py": "60cac5f21a74f33feeede4d5d3eadbf1b888b6de674d6b65c18c35ed38ed7ba2",
+    "requirements.txt": "b8e91851eb720e34fa0f241347b60d140044c9ed4132b3314af9ba889d77166b",
+    "run.py": "f8f8f151f47cd62f59caf78a7f9f27b4c1120788e34345c424909ca19421664d",
+    "SOURCE_NOTES.md": "de86a5ae3181d43f39d95caa354af703eaddc674bdcc59daf315e26815b14c4c",
+    "vendor/src/teeth3ds_dmm/__init__.py": "e794c765a1a01fcbee3f9a42c744aac8c581fd2ddae4e89da34b8ade71610527",
+    "vendor/src/teeth3ds_dmm/alignment/__init__.py": "e794c765a1a01fcbee3f9a42c744aac8c581fd2ddae4e89da34b8ade71610527",
+    "vendor/src/teeth3ds_dmm/alignment/canonical.py": "ebb94e527fb445117d39303e0844b90a724e839b1b6d99151640d3e48bf93160",
+    "vendor/src/teeth3ds_dmm/alignment/similarity.py": "4e0a97f8470fb131f194a0add160d14f3d43e1d5811032c7ffae238856135739",
+    "vendor/src/teeth3ds_dmm/constants.py": "20bdbf61ee383876cabb9f7902951153ff118982f3a9fe2455adcd78772e88aa",
+    "vendor/src/teeth3ds_dmm/errors.py": "eb2874eefe76da2872fbb3fe232307fc92bcaa943d9ee729078ec70e055dc287",
+    "vendor/src/teeth3ds_dmm/io/__init__.py": "e794c765a1a01fcbee3f9a42c744aac8c581fd2ddae4e89da34b8ade71610527",
+    "vendor/src/teeth3ds_dmm/io/obj_reader.py": "7e20769c313364dd0de79e39a52682c5e974343a2cff8638f8ec746b1045378a",
+    "vendor/src/teeth3ds_dmm/reason_codes.py": "4ed3cccda9bf599c1ab8a67f89f0d20f2230aa03bd5f45131974c628d585da43",
+    "vendor/src/teeth3ds_dmm/schemas/__init__.py": "e794c765a1a01fcbee3f9a42c744aac8c581fd2ddae4e89da34b8ade71610527",
+    "vendor/src/teeth3ds_dmm/schemas/alignment.py": "dcf26b6e4306d00da4e9059fc716996dcb7f4930bd6dc47439620d7a00f2a77a"
+  },
+  "mutable_outputs_excluded": [
+    ".inputs",
+    ".venv",
+    ".work",
+    "__pycache__",
+    "output",
+    "reports"
+  ]
+}

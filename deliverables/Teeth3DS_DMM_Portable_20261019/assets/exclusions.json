@@ -1,0 +1,14 @@
+{
+  "status": "USER_APPROVED_EXCLUSION",
+  "scope": "Exact seven arch scans and augmentation descendants; partner arches retained",
+  "excluded_case_ids": [
+    "00OMSZGW_lower",
+    "5J9O0LG3_lower",
+    "6L4N5MA2_lower",
+    "NQJYZS60_lower",
+    "Q5GSR6N2_upper",
+    "THGBYHX3_lower",
+    "X3EW8O0A_lower"
+  ],
+  "original_files_retained": true
+}

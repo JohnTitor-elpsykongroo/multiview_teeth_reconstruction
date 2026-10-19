@@ -37,3 +37,7 @@ dist/
 *.tar.gz
 .DS_Store
 Thumbs.db
+# Small, verified source archive retained with the cleanup record.
+!/archive/legacy_experiments_20261010/sources.zip
+# Copyable source-only preprocessing delivery; no training arrays or raw scans.
+!/deliverables/Teeth3DS_DMM_Portable_20261019.zip

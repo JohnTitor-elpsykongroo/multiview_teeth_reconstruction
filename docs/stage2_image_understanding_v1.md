@@ -1,5 +1,7 @@
 # 阶段二：RGB → 逐牙观测初步实现
 
+> 2026-10-10 清理说明：本文中的早期实验命令已收进[源码归档](../archive/legacy_experiments_20261010/README.md)。运行旧命令前请先恢复相应脚本；原运行证据和结论保留。
+
 **2026-10-06用户调整：本页分割训练/预测路线暂缓。当前运行入口见[直接使用Blender标签](stage2_oracle_workflow.md)，后续再接SegmentAnyTooth。本页保留历史实现说明。**
 
 日期：2026-10-05。状态：两组 Blender pilot 已完成开发输入验收，25项测试通过；模型增加RGB软组织遮挡分支。尚无可用分割权重，未验证牙齿识别精度。详见 [Blender验收与本轮改进](stage2_blender_acceptance_20261005.md)。

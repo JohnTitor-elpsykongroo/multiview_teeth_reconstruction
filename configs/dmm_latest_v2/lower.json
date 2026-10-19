@@ -1,0 +1,14 @@
+{
+  "schema": "dmm_fixed_similarity_training/1",
+  "dataset_root": "../../../Teeth3DS_DualArch_Preprocess/output/latest",
+  "arch": "lower",
+  "cohort": "computational_pass",
+  "samples_per_scene": 4096,
+  "epochs": 100,
+  "batch_size": 1,
+  "learning_rate": 0.0001,
+  "seed": 20261018,
+  "checkpoint_every": 10,
+  "cache_cases": 1,
+  "num_workers": 0
+}

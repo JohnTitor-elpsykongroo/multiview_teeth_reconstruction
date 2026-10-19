@@ -1,0 +1,35 @@
+{
+  "dataset_schema": "dmm_fixed_similarity/2",
+  "baseline_date": "2026-10-17",
+  "runtime": {
+    "python": "3.12.14",
+    "numpy": "2.5.2",
+    "scipy": "1.18.0",
+    "pillow": "12.3.0"
+  },
+  "original_pipeline_sha256": "359fea9776f4992525ff644b5fd82d428baadf22e8c190b6c15b108087b6142b",
+  "original_geometry_verifier_sha256": "cf8f54f0a5a042dc5f951197a4c5db717c5180e3bfd068f65f30b8941a8b41c5",
+  "bundled_legacy_helpers": {
+    "io/obj_reader.py": "7e20769c313364dd0de79e39a52682c5e974343a2cff8638f8ec746b1045378a",
+    "alignment/canonical.py": "ebb94e527fb445117d39303e0844b90a724e839b1b6d99151640d3e48bf93160",
+    "alignment/similarity.py": "4e0a97f8470fb131f194a0add160d14f3d43e1d5811032c7ffae238856135739",
+    "schemas/alignment.py": "dcf26b6e4306d00da4e9059fc716996dcb7f4930bd6dc47439620d7a00f2a77a",
+    "constants.py": "20bdbf61ee383876cabb9f7902951153ff118982f3a9fe2455adcd78772e88aa",
+    "errors.py": "eb2874eefe76da2872fbb3fe232307fc92bcaa943d9ee729078ec70e055dc287",
+    "reason_codes.py": "4ed3cccda9bf599c1ab8a67f89f0d20f2230aa03bd5f45131974c628d585da43"
+  },
+  "candidates": 1793,
+  "export_originals": 1671,
+  "export_entries": 3001,
+  "sample_originals": 6,
+  "sample_export_entries": 8,
+  "modifications": [
+    "Removed review rendering, HTML, progress/summary report files and verification/reproduction report writes; console diagnostics only; numerical data operations unchanged",
+    "Independent verifier does not require excluded originals or archived old project; worker count configurable; image checks removed",
+    "Removed Pillow dependency because the portable project no longer renders images; historical baseline runtime retained for provenance"
+  ],
+  "baseline_metadata_collection": "All exported ZIP central directories were read for CRC32 and uncompressed member size; only 8 selected exports were decompressed for full-array SHA256 and numeric probes. No original scan was processed by this packager.",
+  "full_array_cryptographic_hash_scope": "8 selected exports; remaining baseline uses existing container SHA256 and ZIP member CRC32/size",
+  "human_visual_acceptance": "PENDING",
+  "accepted_for_training": false
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DMM · 牙列形态实验台</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div class="brand"><span class="brand-icon">D</span><div><h1>牙列形态实验台</h1><p>DMM R4 <span> / </span> 双颌 · 逐牙 latent</p></div></div><div class="header-actions"><span id="connection" class="badge">正在连接模型</span><button id="export-params">导出参数</button><button id="export-mesh" disabled>导出网格</button></div></header>
+<main>
+ <section class="viewport"><canvas id="viewer" aria-label="上下颌三维模型，拖动旋转，滚轮缩放"></canvas>
+  <div class="view-toolbar"><div class="button-group" id="visibility"><button data-mode="both" class="active">双颌</button><button data-mode="upper">上颌</button><button data-mode="lower">下颌</button></div><div class="button-group" id="views"><button data-view="oblique" class="active">斜视</button><button data-view="front">正面</button><button data-view="upper">上颌咬合面</button><button data-view="lower">下颌咬合面</button></div></div>
+  <div class="view-options"><label><input type="checkbox" id="color" checked> 牙齿 / 牙龈着色</label><label><input type="checkbox" id="wire"> 线框</label><button id="reset-view">复位视角</button></div>
+  <div id="loading" class="loading"><div class="spinner"></div><h2>正在准备上下颌</h2><p id="loading-message">首次启动需要建立组件缓存，页面会自动显示模型。</p><progress id="load-progress" max="1" value="0"></progress></div>
+  <div class="canvas-caption"><span id="mesh-count">等待模型</span><span>拖动旋转 · Shift 拖动平移 · 滚轮缩放</span></div>
+  <div class="opening-card"><div><span class="eyebrow">上下颌开闭</span><strong id="opening-value">6°</strong></div><input id="opening" type="range" min="0" max="35" step="0.5" value="6" aria-label="开口角度"><div class="scale"><span>示意合拢</span><span>张开 35°</span></div></div>
+ </section>
+ <aside>
+  <div class="section-heading"><span class="eyebrow">01 / 选择牙位</span><button id="reset-all" class="text-button">全部归零</button></div>
+  <div class="arch-title">上颌 <small>UPPER</small></div><div id="upper-teeth" class="tooth-row"></div>
+  <div class="arch-title">下颌 <small>LOWER</small></div><div id="lower-teeth" class="tooth-row"></div>
+  <p class="hint">蓝色是当前牙位；小圆点表示该牙已修改。</p>
+  <div class="divider"></div>
+  <div class="selected-heading"><div><span class="eyebrow">02 / 形状参数</span><h2 id="selected-title">上颌 · 11</h2></div><button id="reset-tooth">此牙归零</button></div>
+  <p class="hint">10 维标准化 latent，0 = 训练均值。<br>这些维度没有预设的“变长 / 变宽”含义。</p>
+  <div id="sliders" class="sliders"></div>
+  <div id="decode-status" class="decode-status" role="status" aria-live="polite">等待模型就绪</div>
+  <button id="apply" class="primary" disabled>应用当前形状</button>
+  <p class="hint subtle">松开滑块后自动重算。计算期间保留上一版网格；开口角度即时生效。</p>
+  <details><summary>模型与展示说明</summary><p id="model-info"></p><p>逐牙参数使用 z = μ + Lq，牙龈保持训练均值。上下颌分别训练；本页开闭是示意位姿，不代表患者咬合或颞下颌关节运动。</p><p>模型着色来自组件权重。参数和网格均在本机计算。</p></details>
+ </aside>
+</main>
+<script src="/app.js"></script></body></html>

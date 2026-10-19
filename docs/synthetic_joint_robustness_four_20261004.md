@@ -1,5 +1,7 @@
 # 第 4 项：四牙 Joint 小规模单因素检查
 
+> 2026-10-10 清理说明：本文中的早期实验命令已收进[源码归档](../archive/legacy_experiments_20261010/README.md)。运行旧命令前请先恢复相应脚本；原运行证据和结论保留。
+
 ## 结论
 
 本轮 **诊断执行完成**：一个干净重放、六项扰动均完成拟合和独立评价，执行失败 0 项。六项扰动按原完整 Joint 门槛 **0/6 通过**，状态 `ROBUSTNESS_NOT_ESTABLISHED`。干净基线本身仍只在旋转和平移门槛失败，所有结果按原阈值保留。
@@ -95,4 +97,4 @@ $env:PYTHONDONTWRITEBYTECODE='1'
 & 'D:\WorkSpace\Dental\teethDMM\.venv\Scripts\python.exe' scripts\render_robustness_four_geometry.py runs\<new-batch> init_seed303
 ```
 
-计划：[joint_robustness_four.json](../configs/joint_robustness_four.json)。原 DMM、checkpoint、历史运行均保持冻结，新增控制器和复核工具与历史求解器分开保存。
+计划：[joint_robustness_four.json（已归档，见清单）](../archive/legacy_experiments_20261010/manifest.json)。原 DMM、checkpoint、历史运行均保持冻结，新增控制器和复核工具与历史求解器分开保存。

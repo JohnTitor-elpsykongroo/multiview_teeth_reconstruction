@@ -1,0 +1,36 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DMM 初始显式网格</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#e8eef2;color:#172c3e;font:16px system-ui,sans-serif}header{padding:24px 32px}h1{margin:0 0 10px;font-size:28px}p{color:#516878;margin:8px 0}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}button{padding:9px 18px;border:1px solid #aebfc9;border-radius:6px;background:white;color:#18384b;cursor:pointer}button:hover{background:#d2e6ee}.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px}.panel{position:relative;background:#dbe4ea;border:1px solid #b9c9d4;border-radius:12px;overflow:hidden}.label{position:absolute;top:16px;left:20px;pointer-events:none}.label b{font-size:22px}.label small{display:block;color:#516878}canvas{width:100%;height:65vh;min-height:350px;display:block;touch-action:none}footer{padding:18px 32px;font-size:14px;color:#516878}@media(max-width:700px){.panels{grid-template-columns:1fr}canvas{height:55vh}}</style>
+<header><h1>DMM R4 · 初始显式网格</h1><p>q = 0 · 训练均值形状 · 牙齿与牙龈表面 · 48³ 原始提取网格</p><div class="toolbar"><button data-view="occlusal">咬合面</button><button data-view="front">正面</button><button data-view="oblique">斜视</button><button id="wire">线框：关</button><span>拖动旋转 · 滚轮缩放 · 双击复位</span></div></header>
+<main class="panels"><section class="panel"><div class="label"><b>上颌</b><small>3,491 顶点 / 6,978 三角面</small></div><canvas id="upper"></canvas></section><section class="panel"><div class="label"><b>下颌</b><small>3,306 顶点 / 6,608 三角面</small></div><canvas id="lower"></canvas></section></main>
+<footer>各颌在独立标准坐标系中展示，不表示上下颌咬合关系。几何未平滑、未补洞；统一象牙色仅用于观察形状。<br>来源：已保存的初始网格；已核验两颌 q=0，模型权重与已部署 R4 一致。尚未拟合到个体。</footer>
+<script>
+const meshes=__MESH_DATA__;
+const states=[];let wire=false;
+const norm=a=>{let l=Math.hypot(...a);return a.map(x=>x/l)},cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+for(const arch of ['upper','lower']){
+ const canvas=document.getElementById(arch),gl=canvas.getContext('webgl',{antialias:true,preserveDrawingBuffer:true});
+ if(!gl){canvas.replaceWith(document.createTextNode('此浏览器不支持 WebGL，请查看 preview.png。'));continue;}
+ const compile=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s};
+ const prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,'attribute vec3 p;attribute vec3 n;uniform mat3 r;uniform vec2 scale;varying vec3 normal;void main(){vec3 v=r*p;normal=r*n;gl_Position=vec4(v.xy*scale,-v.z/160.,1.);}'));
+ gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,'precision mediump float;varying vec3 normal;uniform float line;void main(){vec3 n=normalize(normal);if(n.z<0.)n=-n;float l=.30+.65*max(dot(n,normalize(vec3(-.35,.45,.82))),0.)+.05*max(n.z,0.);gl_FragColor=vec4(mix(vec3(.953,.886,.773)*l,vec3(.11,.24,.29),line),1.);}'));
+ gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+ const m=meshes[arch],center=[0,1,2].map(i=>(Math.min(...m.v.map(v=>v[i]))+Math.max(...m.v.map(v=>v[i])))/2);
+ const vertices=m.v.map(v=>v.map((x,i)=>x-center[i]));const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices.flatMap((v,i)=>[...v,...m.n[i]])),gl.STATIC_DRAW);
+ for(const [name,offset] of [['p',0],['n',12]]){let a=gl.getAttribLocation(prog,name);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,3,gl.FLOAT,false,24,offset)}
+ const indices=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indices);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(m.f.flat()),gl.STATIC_DRAW);
+ const edges=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,edges);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(m.f.flatMap(([a,b,c])=>[a,b,b,c,c,a])),gl.STATIC_DRAW);
+ let yaw=0,elev=0,zoom=1;const sign=arch==='upper'?-1:1;
+ const state={set(view){zoom=1;yaw=view==='oblique'?.6:0;elev=view==='occlusal'?sign*Math.PI/2:view==='front'?0:sign*.72;draw()}};states.push(state);
+ function draw(){let dpr=Math.min(devicePixelRatio,2);canvas.width=Math.round(canvas.clientWidth*dpr);canvas.height=Math.round(canvas.clientHeight*dpr);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.91,.933,.949,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.useProgram(prog);
+ let z=[Math.sin(yaw)*Math.cos(elev),-Math.cos(yaw)*Math.cos(elev),Math.sin(elev)];let x=[Math.cos(yaw),Math.sin(yaw),0],y=cross(z,x);
+ gl.uniformMatrix3fv(gl.getUniformLocation(prog,'r'),false,new Float32Array([x[0],y[0],z[0],x[1],y[1],z[1],x[2],y[2],z[2]]));
+ const aspect=canvas.width/canvas.height;gl.uniform2f(gl.getUniformLocation(prog,'scale'),zoom/55,zoom*aspect/55);gl.uniform1f(gl.getUniformLocation(prog,'line'),0);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indices);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);gl.drawElements(gl.TRIANGLES,m.f.length*3,gl.UNSIGNED_SHORT,0);gl.disable(gl.POLYGON_OFFSET_FILL);
+ if(wire){gl.uniform1f(gl.getUniformLocation(prog,'line'),1);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,edges);gl.drawElements(gl.LINES,m.f.length*6,gl.UNSIGNED_SHORT,0)}
+ }
+ state.draw=draw;let last=null;canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);last=[e.clientX,e.clientY]};canvas.onpointermove=e=>{if(last){yaw-=(e.clientX-last[0])*.009;elev=Math.max(-Math.PI/2,Math.min(Math.PI/2,elev+(e.clientY-last[1])*.009));last=[e.clientX,e.clientY];draw()}};canvas.onpointerup=canvas.onpointercancel=()=>last=null;
+ canvas.onwheel=e=>{e.preventDefault();zoom=Math.max(.4,Math.min(3,zoom*Math.exp(-e.deltaY*.001)));draw()};canvas.ondblclick=()=>state.set('oblique');new ResizeObserver(draw).observe(canvas);state.set('oblique');
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>states.forEach(s=>s.set(b.dataset.view)));
+document.getElementById('wire').onclick=e=>{wire=!wire;e.target.textContent='线框：'+(wire?'开':'关');states.forEach(s=>s.draw())};
+</script></html>

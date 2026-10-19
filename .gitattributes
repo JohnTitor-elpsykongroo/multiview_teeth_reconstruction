@@ -15,3 +15,5 @@
 *.jpg binary
 *.npz binary
 *.npy binary
+# The portable package authenticates every bundled file byte-for-byte.
+/deliverables/Teeth3DS_DMM_Portable_20261019/** -text

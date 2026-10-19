@@ -1,0 +1,546 @@
+{
+  "schema": "project_cleanup_archive_v1",
+  "date": "2026-10-10",
+  "reason": "superseded single-arch experiments and one-off RGB/AA diagnostics; no active code or tests depend on archived scripts",
+  "base_commit": "77ccadcc668002acaca89e2682f4f9f2498134e7",
+  "archive": {
+    "path": "archive/legacy_experiments_20261010/sources.zip",
+    "bytes": 205870,
+    "sha256": "31cb4a2f3fd95a5ebf08aec813f57a93feb05124655e44a8ee5e818562770b7a"
+  },
+  "sources": [
+    {
+      "path": "scripts/audit_dmm_training.py",
+      "bytes": 17962,
+      "sha256": "bd6d3eca7f87e0c0e9d48ee67d706ed28dee66d5683873a0e41e71c1e697517e"
+    },
+    {
+      "path": "scripts/audit_sanity_results.py",
+      "bytes": 12956,
+      "sha256": "851913dabf5e006702facb5446f0df1548a9cc822bc8486b9dac24806fd124c5"
+    },
+    {
+      "path": "scripts/check_boundary_band.py",
+      "bytes": 1227,
+      "sha256": "dcfa6e5fedaeb20b3743e147734b17cd7bcb7ca292234f74e35857920f02b1a0"
+    },
+    {
+      "path": "scripts/check_shape_metric_integration.py",
+      "bytes": 2171,
+      "sha256": "7e65d34deba2af2b1ed8a2e480dee2f9fef1e3b138afed7a507dd0f3dcb298b4"
+    },
+    {
+      "path": "scripts/check_surface_metric_fallback.py",
+      "bytes": 983,
+      "sha256": "2ebf859720c5a02f18ec6ea912d2730b9ee38a86fd356607bb234a5fa4677ec5"
+    },
+    {
+      "path": "scripts/diagnose_joint_observability.py",
+      "bytes": 4368,
+      "sha256": "324852b306bc4e7de54389bd313ce1c0ce17a86e7b4f109f543e83f2fe16f752"
+    },
+    {
+      "path": "scripts/diagnose_shape_observability.py",
+      "bytes": 3009,
+      "sha256": "2ae4a9a74844d3adc3f561850285343b33a8332c550b4a6988efa3bed5bbbfe4"
+    },
+    {
+      "path": "scripts/diagnose_shape_sampling.py",
+      "bytes": 2200,
+      "sha256": "cb7f467dee793656ca1e4921a539e0e25d5417c3b4ad803633d4d349c7cad6cc"
+    },
+    {
+      "path": "scripts/evaluate_joint.py",
+      "bytes": 10463,
+      "sha256": "31639a370bb197c0dfc2565d5d0fcdc866dfbbaf52015292253472fb0ad72537"
+    },
+    {
+      "path": "scripts/evaluate_joint_robust.py",
+      "bytes": 12097,
+      "sha256": "1c071db9c043168d6e13562cc0533ff018a1b513f7658cf00c43966ca636fe0f"
+    },
+    {
+      "path": "scripts/evaluate_pose_only.py",
+      "bytes": 6085,
+      "sha256": "0e597fea214abbf8de5b51cb532512b0546139ae1c7774e46780e01eccf71c2f"
+    },
+    {
+      "path": "scripts/evaluate_shape_only.py",
+      "bytes": 10577,
+      "sha256": "b6cf36f94db9903dbaea511709d3c2d18134a9c5d54244d8e5aef3531208921f"
+    },
+    {
+      "path": "scripts/inspect_shape_crosscase.py",
+      "bytes": 2268,
+      "sha256": "0f7d2eaf4753a5e75d770db86761053505d1cdff30af555a7764fbe768cf2b83"
+    },
+    {
+      "path": "scripts/inspect_shape_expansion.py",
+      "bytes": 1193,
+      "sha256": "9e719cd007672a9a914c07afdfd1ab52be8a277629f06b3174dd05442280bbf3"
+    },
+    {
+      "path": "scripts/joint_boundary_band.py",
+      "bytes": 2106,
+      "sha256": "447829fe296c099a5db82021289d33927835879b05b952c05cdfe7564233ec93"
+    },
+    {
+      "path": "scripts/joint_common.py",
+      "bytes": 6278,
+      "sha256": "93d36bfb2e6731cea13c0df276be8d5b5fa02affb34172f13e3c8f6c05ff2b82"
+    },
+    {
+      "path": "scripts/joint_population_prior.py",
+      "bytes": 967,
+      "sha256": "43194450d666da3f7934462d79e129b0f50048fc677d44d5d31744ff8ee4ba40"
+    },
+    {
+      "path": "scripts/package_forward_observations.py",
+      "bytes": 4856,
+      "sha256": "ad6c0611047df407d708b78c6dab726f7e19ce817f43159acd9c74981fc73448"
+    },
+    {
+      "path": "scripts/pose_warmup.py",
+      "bytes": 5621,
+      "sha256": "011ef954d1ce02b3fe8c370773d6ba1e07112ae552a453206492cd81cf902d34"
+    },
+    {
+      "path": "scripts/prepare_joint.py",
+      "bytes": 7163,
+      "sha256": "27c9d7632dbd8535c282bf252e82809873ca2516f70de7229b3d62ec30bec9a9"
+    },
+    {
+      "path": "scripts/prepare_joint_shape_control.py",
+      "bytes": 3380,
+      "sha256": "3672c50ecb1ee09a28121b5910c5f464511d12b2f954b45af0a7924d2c36e011"
+    },
+    {
+      "path": "scripts/prepare_shape_only.py",
+      "bytes": 6075,
+      "sha256": "136a85fecc701a1fdc01172f19bf84c508473dd0194d66e871fde10caa5d71d7"
+    },
+    {
+      "path": "scripts/render_joint_review.py",
+      "bytes": 6169,
+      "sha256": "fd879369a0242720d6b0b821a6693fecff75b66232da9ff76a06c2c3ef8b5427"
+    },
+    {
+      "path": "scripts/render_joint_stabilized_review.py",
+      "bytes": 601,
+      "sha256": "d311b87a6f063c3167de74b274e2bb3e59ec7afb405bc00cb3565473303dd8c3"
+    },
+    {
+      "path": "scripts/render_pose_random_review.py",
+      "bytes": 3081,
+      "sha256": "9175c53fa17790d16264d4df4f00e47d8bf305f46d3b8f70fdd305aad396bad7"
+    },
+    {
+      "path": "scripts/render_review_views.py",
+      "bytes": 5059,
+      "sha256": "be6c3b28bf5a2244a9580df3fdd2a460610e8f8019bde081ff06be6a9a2f23f2"
+    },
+    {
+      "path": "scripts/render_robustness_four_geometry.py",
+      "bytes": 1780,
+      "sha256": "d580e817233c2884d8d523b7a177d01f598db98995e350bff9bfeba007073adc"
+    },
+    {
+      "path": "scripts/render_robustness_four_inputs.py",
+      "bytes": 2781,
+      "sha256": "fd00633d2ba9137622c0b8b6be979cc3e8841a436bcb7b409df4d5883e86712e"
+    },
+    {
+      "path": "scripts/render_robustness_inputs.py",
+      "bytes": 3002,
+      "sha256": "33940b64db5f8a544466913d9a0e273d9aa998db9c9336b84620b127c7e572c2"
+    },
+    {
+      "path": "scripts/render_shape_geometry_review.py",
+      "bytes": 3922,
+      "sha256": "0de44a7f587526ee6b482bdb6a5ab1e3969491038269029bc2638ea277f29bf9"
+    },
+    {
+      "path": "scripts/render_shape_review.py",
+      "bytes": 3764,
+      "sha256": "d80e0df92f0626b63f560a4fa22bca0488a4baa2e911f138ad2aee7d83b88756"
+    },
+    {
+      "path": "scripts/review_dmm_training_audit.py",
+      "bytes": 20039,
+      "sha256": "e87a567bce29584c193945eab63ab299d13086186947abebc2d3b3f534c2fd6e"
+    },
+    {
+      "path": "scripts/review_joint_robustness.py",
+      "bytes": 14563,
+      "sha256": "36f3fea39897a4f9d8dc13f3d20ecb01d36780166afa85ce43986ce11549abd5"
+    },
+    {
+      "path": "scripts/review_joint_robustness_four.py",
+      "bytes": 18299,
+      "sha256": "0b0929bd14f16ce05c004bbe835cf60e82fd32a14fd180b7292525fc827231b8"
+    },
+    {
+      "path": "scripts/review_joint_stabilization.py",
+      "bytes": 3177,
+      "sha256": "05d461023a043786c82e21e11ffbc9025bcd311c48a52141f2cbdbe437338ac3"
+    },
+    {
+      "path": "scripts/review_joint_warmup.py",
+      "bytes": 10481,
+      "sha256": "fb946fcff44736191cf8da7262bbd5693cf82dfb5d62a58a8a00618f91206fd1"
+    },
+    {
+      "path": "scripts/review_shape_surface_metrics.py",
+      "bytes": 5014,
+      "sha256": "2b57d531607da760f0d1244dc413445fd9bc4033fc837903ec65cc0556bc6e0d"
+    },
+    {
+      "path": "scripts/run_forward_check.py",
+      "bytes": 25154,
+      "sha256": "990e5acce34508f4f2399c1f9db68333b0aae656983a8a90cfe1f4687ca53b3d"
+    },
+    {
+      "path": "scripts/run_joint.py",
+      "bytes": 12258,
+      "sha256": "edbb46042e1cb6a4bf0d156d03d40c2db294018b4ee01dfad28c4caafd41ce24"
+    },
+    {
+      "path": "scripts/run_joint_four_tooth.py",
+      "bytes": 5730,
+      "sha256": "e5ae42cd81ba7f6457dc36b8d3fbd487a55fd4ff13df70300efafb82bda8877d"
+    },
+    {
+      "path": "scripts/run_joint_population.py",
+      "bytes": 14790,
+      "sha256": "6da030e255828090817d85e7957ccb90631709952361ffbc60c532319a351ba7"
+    },
+    {
+      "path": "scripts/run_joint_population_batch.py",
+      "bytes": 4788,
+      "sha256": "a3054a6a294a608972e03573a066dc4ddb167b70da7a305c53a2da74b942daa2"
+    },
+    {
+      "path": "scripts/run_joint_robust.py",
+      "bytes": 14196,
+      "sha256": "85de6c279371335f8b7c963d96f0f334e9911e3f008f5bde593bd53e4cf78ccf"
+    },
+    {
+      "path": "scripts/run_joint_robustness.py",
+      "bytes": 11051,
+      "sha256": "ae593c84c319b60bc2b9df2b21b2ab69090eb942393b00a24b8a7840f9767f5c"
+    },
+    {
+      "path": "scripts/run_joint_robustness_four.py",
+      "bytes": 16933,
+      "sha256": "6672ba3c89e7c5f4c6aaf6ac394746ad47a44f8c62f0542fe20dbeebcaa6396e"
+    },
+    {
+      "path": "scripts/run_joint_stabilization_batch.py",
+      "bytes": 3701,
+      "sha256": "68290527946916270fa2ab941c4d19e2b9f8a6a3a07559d7c1de6af8a7c14dd1"
+    },
+    {
+      "path": "scripts/run_joint_stabilized.py",
+      "bytes": 12467,
+      "sha256": "3639c313d5777eec59befad9083de041d2f022ebcc17768c679cd5403e37f54b"
+    },
+    {
+      "path": "scripts/run_joint_warmup.py",
+      "bytes": 13839,
+      "sha256": "7a46e3eedd53163178caaccc4d100a879af7c2bdefb8935b257dd13e02276301"
+    },
+    {
+      "path": "scripts/run_pose_only.py",
+      "bytes": 18599,
+      "sha256": "784cfa705d6af069a6d124edb37107239dce103c203632750b7a76b8eb94141b"
+    },
+    {
+      "path": "scripts/run_pose_random.py",
+      "bytes": 12888,
+      "sha256": "5068e3ae5ff59cd0bf4e9e0d5bc87e26d1b81c3e9bc522f05db85f05be8a6bb8"
+    },
+    {
+      "path": "scripts/run_pose_warmup_only.py",
+      "bytes": 3712,
+      "sha256": "069d21a35cc892f6e9addc2a0c7a350886eeeb48d024b072b7cee98c1141af49"
+    },
+    {
+      "path": "scripts/run_shape_crosscase.py",
+      "bytes": 14152,
+      "sha256": "da3f4148bde5130663592058a8a8903b6b27638672eb31b5677f26f3719b77ba"
+    },
+    {
+      "path": "scripts/run_shape_expansion.py",
+      "bytes": 8360,
+      "sha256": "5085ad9c8b53c51c8141eaeefa19c918b34f67c88bfcbc6c5ea58c426422f780"
+    },
+    {
+      "path": "scripts/run_shape_only.py",
+      "bytes": 11719,
+      "sha256": "206680fdc223a0f1ea296db7c63de92655dc43cb060d5bba17c4e9d696293de1"
+    },
+    {
+      "path": "scripts/shape_only_common.py",
+      "bytes": 11267,
+      "sha256": "052013ae85059fab7911cafa33f7c6da601ac8c6f6abe8539a1fcdd483d1a7ef"
+    },
+    {
+      "path": "scripts/stage2_development_smoke.py",
+      "bytes": 4821,
+      "sha256": "7eec5353e55b88e413ef4526c631e28399cf069e501e76a622c97f8d365fbac5"
+    },
+    {
+      "path": "scripts/summarize_joint.py",
+      "bytes": 10863,
+      "sha256": "a4eb615d49462da473d0d4bd8e4889b8cd67fb246c27da7de324f4ae19985b00"
+    },
+    {
+      "path": "scripts/summarize_pose_random.py",
+      "bytes": 11422,
+      "sha256": "a100b3cb8388e9f891fbd763e962902752ffa463cdb4b3415e89bcaa0c1de9ff"
+    },
+    {
+      "path": "scripts/summarize_shape_crosscase.py",
+      "bytes": 6528,
+      "sha256": "6631531910ef43f5f871e97964ce8c689677882deb00fcad2ab9aadaa2d43760"
+    },
+    {
+      "path": "scripts/summarize_shape_expansion.py",
+      "bytes": 5737,
+      "sha256": "db71597763d040e7edb6e46170cc8bbeda38ca0a5d1f3d39509d04323c07a3ce"
+    },
+    {
+      "path": "scripts/surface_metric_utils.py",
+      "bytes": 3091,
+      "sha256": "a0053372c36270e025c33825902869d02ed3a4c0eeab5c0261d1f9f2f3c480e7"
+    },
+    {
+      "path": "scripts/verify_joint_stabilization.py",
+      "bytes": 2467,
+      "sha256": "b29518b198cbb3555a390f6b2d4bf5afb2c0c8f731ea5f006407a03836a318db"
+    },
+    {
+      "path": "scripts/verify_shape_crosscase.py",
+      "bytes": 7885,
+      "sha256": "63cc2274ed504e37a8447b2ef1b4e441a3a35466c496fa41f7f76c4f7bc34b55"
+    },
+    {
+      "path": "configs/forward_check.json",
+      "bytes": 554,
+      "sha256": "b45f45abcf78331aeb670999916282eb9c972844aababed82fa922115742a042"
+    },
+    {
+      "path": "configs/joint_minimal.json",
+      "bytes": 1535,
+      "sha256": "ec4c7cfebbc9ae07c6b4396bfde94d9989ca39bc026f91ecb294ef9ffc55122b"
+    },
+    {
+      "path": "configs/joint_robustness.json",
+      "bytes": 702,
+      "sha256": "1d5781271dbef35fc7e8c0447665291b1dd755d0134a087eb7cd7858704631b4"
+    },
+    {
+      "path": "configs/joint_robustness_four.json",
+      "bytes": 1556,
+      "sha256": "de71c9c17eaee108545601b72fbcfe5a738709814570ae832f558d6967e20a69"
+    },
+    {
+      "path": "configs/joint_warmup.json",
+      "bytes": 1937,
+      "sha256": "ddd095ce23d8f0606e9ce0a9b6bfcfa1ff089c25127d72e7cff55586ffc336aa"
+    },
+    {
+      "path": "configs/pose_only.json",
+      "bytes": 742,
+      "sha256": "413ea93f77cf3316a41472a0b1fc75535408b676033e46c3be9255dde3d6f4f3"
+    },
+    {
+      "path": "configs/pose_random.json",
+      "bytes": 750,
+      "sha256": "89047cb6bdffb533791abffcf83c06921cfd0548b94383f6a70733e84a998779"
+    },
+    {
+      "path": "configs/shape_crosscase.json",
+      "bytes": 362,
+      "sha256": "b60557b788dc1b41944bf95338fd25b501586f4e0a8c205ffce6824f6098e4dd"
+    },
+    {
+      "path": "configs/shape_expansion.json",
+      "bytes": 1513,
+      "sha256": "4695c4578056f78e09093894aa251f1b517740b911a1b3dad5eb64e2e3e99c36"
+    },
+    {
+      "path": "configs/shape_only.json",
+      "bytes": 793,
+      "sha256": "49b983d88847e3ca6748005019a782ebc36327dc67d28a74138648b36f298e7f"
+    },
+    {
+      "path": "multiview_teeth_reconstruction_semanticxy.before_20260929.md",
+      "bytes": 36354,
+      "sha256": "e228726fd056c55afaa4d97f1942affbd2d61cd3375d6c80b1d45e32ac6e4eed"
+    },
+    {
+      "path": ".runtime/aa_probe.py",
+      "bytes": 1560,
+      "sha256": "26b30a6a244a0a10582296efa0eeb2d68f3830e6cdc21bdc02063f2076bdd5f6"
+    },
+    {
+      "path": ".runtime/aa_raw.py",
+      "bytes": 956,
+      "sha256": "6c8fd46f3d5eb8b53d08ba5e64987497a9292add971696a0b975db56dc34e740"
+    },
+    {
+      "path": ".runtime/aa_repeat.py",
+      "bytes": 1080,
+      "sha256": "8a255f0531128d286b9a0a59d4f10c98f98a6aad6b938fa91ff8e15349b66c0d"
+    }
+  ],
+  "active_scripts": [
+    "build_gpu_backend.ps1",
+    "build_training_package.py",
+    "check_dual_extension.py",
+    "check_gpu_render.py",
+    "check_render_bridge.py",
+    "check_staged_fitting.py",
+    "collect_training_feedback.py",
+    "gpu_env.ps1",
+    "prepare_cuda_redist.py",
+    "run_training_wsl.sh",
+    "setup_training_wsl.sh",
+    "stage2_audit_dataset.py",
+    "stage2_evaluate.py",
+    "stage2_observe.py",
+    "stage2_oracle.py",
+    "stage3_fuse.py",
+    "training_smoke.py",
+    "training_target_preflight.py",
+    "verify_training_package.py"
+  ],
+  "before_readme_sha256": "3797875139f291aec912a29106181d30542b513578c30b3003451694c9d13cfc",
+  "preserved_dmm_source_sha256": "0e486730884262631d33cbea6df63414aa58d5960ab9faacb81dac1f06bdee7c",
+  "preserved_decoder_contract": {
+    "version": "coupled_decoder_api_v1",
+    "decoder_sha256": "7f295c234da93031d820935815a764b85063bc321248cdc93fb98bba1dd43cce",
+    "query": "normalized_sigmoid_blend_present_components",
+    "model_unit_mm": 50,
+    "statistics": "per_component_cholesky_original_train_v1"
+  },
+  "checkpoint_deduplication": [
+    {
+      "arch": "upper",
+      "retained": {
+        "path": "runs/training_handoff_20261006/upper_native_smoke/final.pth",
+        "bytes": 559760616,
+        "sha256": "6fd83e5717e852161ffc5cd8fb8665c40e877555e4e35f8a84222353663fb381"
+      },
+      "removed": [
+        {
+          "path": "runs/training_handoff_20261006/upper_native_smoke/best_train.pth",
+          "bytes": 559852139,
+          "sha256": "fc16a621c57e43020fab8e3dcdde955e9d1fd2532a786d038aac3a3afbfbcf73"
+        },
+        {
+          "path": "runs/training_handoff_20261006/upper_native_smoke/epoch_000001.pth",
+          "bytes": 559863737,
+          "sha256": "ee78572779a66b154e261b18c7e7bddc5f742b384097582f27b0da7458c7e4c8"
+        }
+      ],
+      "normalized_member_sha256": "26f60ac9cc9dd8abfefccda28c8b410f0bbc1bf5cffe1963ed86bf5892d1db24",
+      "member_count": 5799,
+      "comparison": "all uncompressed ZIP member SHA256 equal after archive root prefix removal; container bytes differ"
+    },
+    {
+      "arch": "lower",
+      "retained": {
+        "path": "runs/training_handoff_20261006/lower_native_smoke/final.pth",
+        "bytes": 559704680,
+        "sha256": "308f9c550ee964534953647c71ab6da442217a1bad357679f52497bcc9e53023"
+      },
+      "removed": [
+        {
+          "path": "runs/training_handoff_20261006/lower_native_smoke/best_train.pth",
+          "bytes": 559796203,
+          "sha256": "0bb088bdab42232d2e962bd03746efc8aaf2b31f1ea5422318547a24af443af1"
+        },
+        {
+          "path": "runs/training_handoff_20261006/lower_native_smoke/epoch_000001.pth",
+          "bytes": 559807801,
+          "sha256": "58000fec82631226b8a4394c15b776cac947a0e63592532cae2a48bb6ea21caa"
+        }
+      ],
+      "normalized_member_sha256": "de3bffa59ac8b86278c75f7b11f9e44632777ea172517adb345a9b6f98669232",
+      "member_count": 5799,
+      "comparison": "all uncompressed ZIP member SHA256 equal after archive root prefix removal; container bytes differ"
+    }
+  ],
+  "planned_cleanup_summary": {
+    "archived_sources": {
+      "targets": 77,
+      "files": 77,
+      "bytes": 544549
+    },
+    "duplicate_smoke_checkpoints": {
+      "targets": 4,
+      "files": 4,
+      "bytes": 2239319880
+    },
+    "installed_cuda_downloads": {
+      "targets": 21,
+      "files": 21,
+      "bytes": 148483064
+    },
+    "build_intermediates": {
+      "targets": 2,
+      "files": 28,
+      "bytes": 434606343
+    },
+    "temporary_pdf_views": {
+      "targets": 1,
+      "files": 7,
+      "bytes": 2018440
+    },
+    "incomplete_download": {
+      "targets": 1,
+      "files": 1,
+      "bytes": 0
+    },
+    "python_bytecode": {
+      "targets": 1018,
+      "files": 8679,
+      "bytes": 134831071
+    }
+  },
+  "cleanup_result": {
+    "status": "REMOVED_VERIFIED_TARGETS",
+    "date": "2026-10-10",
+    "targets": 1124,
+    "files": 8817.0,
+    "bytes": 2959803347.0
+  },
+  "verification": {
+    "status": "PASS",
+    "protected_files_hash_matched": 246,
+    "archive_sources_hash_matched": 77,
+    "removed_targets_confirmed": 1124,
+    "active_python_files_checked": 158,
+    "local_links_checked": 103,
+    "dmm_source_sha256": "0e486730884262631d33cbea6df63414aa58d5960ab9faacb81dac1f06bdee7c",
+    "decoder_contract_unchanged": true,
+    "active_scripts": 19,
+    "post_test_protected_hashes_matched": true
+  },
+  "regression": {
+    "status": "PASS_WITH_ONE_PLATFORM_SKIP",
+    "unique_tests": 133,
+    "passed": 132,
+    "skipped": 1,
+    "skipped_tests": [
+      "test_stage3_fusion.ContractTests.test_symlink_escape"
+    ]
+  },
+  "installed_cuda_verification": {
+    "download_components": 5,
+    "installed_files_checked": 2077,
+    "method": "download SHA256 equals retained NVIDIA redistrib index; every installed file SHA256 equals uncompressed archive member"
+  }
+}

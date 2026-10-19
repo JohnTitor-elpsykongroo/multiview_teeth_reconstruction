@@ -1,0 +1,13 @@
+{
+  "reference_cases": {
+    "upper": "01328DDN_upper",
+    "lower": "01JNZKAX_lower"
+  },
+  "reference_bbox_margin": 0.95,
+  "seed": 20261017,
+  "surface_per_tooth": 25000,
+  "surface_gum": 100000,
+  "offsurface_points": 500000,
+  "mirror_train": true,
+  "normal_distance_gate_model": 0.08
+}

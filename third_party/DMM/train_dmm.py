@@ -10,7 +10,16 @@ _manifest_cli = any(arg == "--config" or arg.startswith("--config=") for arg in 
 _manifest_help = any(arg in ("-h", "--help") for arg in sys.argv[1:]) and not any(arg in ("-e", "--experiment") for arg in sys.argv[1:])
 if __name__ == "__main__" and (_manifest_cli or _manifest_help):
     from dmm.__main__ import main as manifest_main
-    sys.argv.insert(1, "train")
+    _command = "train"
+    if _manifest_cli:
+        import json as _json
+        _config_arg = next((arg.split("=", 1)[1] for arg in sys.argv[1:] if arg.startswith("--config=")), None)
+        if _config_arg is None:
+            _config_arg = sys.argv[sys.argv.index("--config") + 1]
+        with Path(_config_arg).open(encoding="utf-8-sig") as _stream:
+            if _json.load(_stream).get("schema") == "dmm_fixed_similarity_training/1":
+                _command = "train-latest"
+    sys.argv.insert(1, _command)
     manifest_main()
     raise SystemExit(0)
 
